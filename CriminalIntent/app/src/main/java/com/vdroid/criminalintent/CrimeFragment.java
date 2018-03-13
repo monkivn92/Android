@@ -3,6 +3,7 @@ package com.vdroid.criminalintent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.ViewPager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -14,6 +15,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -23,10 +25,17 @@ import java.util.UUID;
 public class CrimeFragment extends Fragment
 {
     private Crime mCrime;
+    private List<Crime> mCrimes;
 
     private EditText mTitleField;
     private Button mDateButton;
     private CheckBox mSolvedCheckBox;
+
+    private Button JumpToLastBtn;
+    private Button JumpToFirstBtn;
+
+    private ViewPager mViewPager;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -36,7 +45,7 @@ public class CrimeFragment extends Fragment
         UUID crimeId = (UUID) getArguments().getSerializable("crime_id");
 
         mCrime = CrimeLab.get( getActivity() ).getCrime(crimeId);
-
+        mCrimes = CrimeLab.get(getActivity()).getCrimes();
         //Log.d("crime_fragment", mCrime.getmText());
     }
 
@@ -49,6 +58,27 @@ public class CrimeFragment extends Fragment
         mTitleField = (EditText) v.findViewById(R.id.crime_title);
         mDateButton = (Button) v.findViewById(R.id.crime_date);
         mSolvedCheckBox = (CheckBox) v.findViewById(R.id.crime_solved);
+
+        JumpToLastBtn = (Button)v.findViewById(R.id.jtlast_btn);
+        JumpToFirstBtn = (Button)v.findViewById(R.id.jtfirst_btn);
+
+        mViewPager = (ViewPager) getActivity().findViewById(R.id.crime_view_pager);
+
+         if(mCrime.getmId() == mCrimes.get(0).getmId())
+        {
+            JumpToFirstBtn.setEnabled(false);
+            JumpToLastBtn.setEnabled(true);
+        }
+        else if(mCrime.getmId() == mCrimes.get( mCrimes.size() -1 ).getmId())
+        {
+            JumpToFirstBtn.setEnabled(true);
+            JumpToLastBtn.setEnabled(false);
+        }
+        else
+        {
+            JumpToFirstBtn.setEnabled(true);
+            JumpToLastBtn.setEnabled(true);
+        }
 
         mTitleField.addTextChangedListener(
                 new TextWatcher()
@@ -92,6 +122,28 @@ public class CrimeFragment extends Fragment
                 }
         );
 
+        JumpToFirstBtn.setOnClickListener(
+                new View.OnClickListener()
+                {
+                    @Override
+                    public void onClick(View view)
+                    {
+                        scrollToItem(0);
+                    }
+                }
+        );
+
+        JumpToLastBtn.setOnClickListener(
+                new View.OnClickListener()
+                {
+                    @Override
+                    public void onClick(View view)
+                    {
+                        scrollToItem(mCrimes.size() - 1);
+                    }
+                }
+        );
+
 
 
         return v;
@@ -101,11 +153,23 @@ public class CrimeFragment extends Fragment
     public static CrimeFragment newInstance(UUID crimeId)
     {
         Bundle args = new Bundle();
+
         args.putSerializable("crime_id", crimeId);
+
         CrimeFragment fragment = new CrimeFragment();
+
         fragment.setArguments(args);
+
         return fragment;
 
+    }
+
+    private void scrollToItem(int pos)
+    {
+        if(pos >= 0 && pos < mCrimes.size())
+        {
+            mViewPager.setCurrentItem(pos, true);
+        }
     }
 
 

@@ -96,7 +96,8 @@ public class CrimeListFragment extends  Fragment
             //Toast.makeText(getActivity(), mCrime.getmText() + " clicked!", Toast.LENGTH_SHORT).show();
             current_pos_clicked_item = this.getAdapterPosition();
             //Log.d("POS", String.valueOf(current_pos_clicked_item));
-            Intent intent = CrimeActivity.newIntent(getActivity(), mCrime.getmId());
+            //Intent intent = CrimeActivity.newIntent(getActivity(), mCrime.getmId());
+            Intent intent = CrimePagerActivity.newIntent(getActivity(), mCrime.getmId());
             startActivity(intent);
         }
 
