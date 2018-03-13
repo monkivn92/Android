@@ -5,6 +5,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +13,8 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+
+import java.util.UUID;
 
 /**
  * Created by vuongpv on 3/8/18.
@@ -29,7 +32,12 @@ public class CrimeFragment extends Fragment
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        mCrime = new Crime();
+        //mCrime = new Crime();
+        UUID crimeId = (UUID) getArguments().getSerializable("crime_id");
+
+        mCrime = CrimeLab.get( getActivity() ).getCrime(crimeId);
+
+        //Log.d("crime_fragment", mCrime.getmText());
     }
 
     @Nullable
@@ -68,6 +76,10 @@ public class CrimeFragment extends Fragment
         mDateButton.setText(mCrime.getmDate().toString());
         mDateButton.setEnabled(false);
 
+        mTitleField.setText(mCrime.getmText());
+
+        mSolvedCheckBox.setChecked(mCrime.getmSolved());
+
         mSolvedCheckBox.setOnCheckedChangeListener(
                 new CompoundButton.OnCheckedChangeListener()
                 {
@@ -84,4 +96,17 @@ public class CrimeFragment extends Fragment
 
         return v;
     }
+
+
+    public static CrimeFragment newInstance(UUID crimeId)
+    {
+        Bundle args = new Bundle();
+        args.putSerializable("crime_id", crimeId);
+        CrimeFragment fragment = new CrimeFragment();
+        fragment.setArguments(args);
+        return fragment;
+
+    }
+
+
 }
