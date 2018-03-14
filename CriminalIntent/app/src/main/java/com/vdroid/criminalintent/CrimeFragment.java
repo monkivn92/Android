@@ -1,8 +1,12 @@
 package com.vdroid.criminalintent;
 
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -13,8 +17,10 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.DatePicker;
 import android.widget.EditText;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -104,7 +110,7 @@ public class CrimeFragment extends Fragment
         );
 
         mDateButton.setText(mCrime.getmDate().toString());
-        mDateButton.setEnabled(false);
+        //mDateButton.setEnabled(false);
 
         mTitleField.setText(mCrime.getmText());
 
@@ -144,6 +150,26 @@ public class CrimeFragment extends Fragment
                 }
         );
 
+        mDateButton.setOnClickListener(
+
+                new View.OnClickListener()
+                {
+
+                    @Override
+                    public void onClick(View view)
+                    {
+                        FragmentManager frg = getFragmentManager();
+
+                        DatePickerFragment dialog = DatePickerFragment.newInstance(mCrime.getmDate());
+
+                        dialog.setTargetFragment(CrimeFragment.this, 888);
+
+                        dialog.show(frg, "DialogDate");
+                    }
+                }
+
+        );
+
 
 
         return v;
@@ -169,6 +195,21 @@ public class CrimeFragment extends Fragment
         if(pos >= 0 && pos < mCrimes.size())
         {
             mViewPager.setCurrentItem(pos, true);
+        }
+    }
+
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode != Activity.RESULT_OK)
+        {
+            return;
+        }
+        if (requestCode == 888)
+        {
+            Date date = (Date) data.getSerializableExtra("sent_date");
+            mCrime.setmDate(date);
+            mDateButton.setText(mCrime.getmDate().toString());
         }
     }
 
