@@ -70,6 +70,12 @@ public class CrimeFragment extends Fragment
 
         mViewPager = (ViewPager) getActivity().findViewById(R.id.crime_view_pager);
 
+        if(mCrime.getmSolved() == null)
+        {
+            JumpToLastBtn.setVisibility(View.INVISIBLE);
+            JumpToFirstBtn.setVisibility(View.INVISIBLE);
+        }
+
          if(mCrime.getmId() == mCrimes.get(0).getmId())
         {
             JumpToFirstBtn.setEnabled(false);
@@ -109,12 +115,16 @@ public class CrimeFragment extends Fragment
                 }
         );
 
+
         mDateButton.setText(mCrime.getmDate().toString());
         //mDateButton.setEnabled(false);
 
         mTitleField.setText(mCrime.getmText());
 
-        mSolvedCheckBox.setChecked(mCrime.getmSolved());
+        if(mCrime.getmSolved() != null)
+        {
+            mSolvedCheckBox.setChecked(mCrime.getmSolved());
+        }
 
         mSolvedCheckBox.setOnCheckedChangeListener(
                 new CompoundButton.OnCheckedChangeListener()
@@ -207,6 +217,11 @@ public class CrimeFragment extends Fragment
         }
         if (requestCode == 888)
         {
+            if(mCrime.getmSolved() == null)
+            {
+                return;
+            }
+
             Date date = (Date) data.getSerializableExtra("sent_date");
             mCrime.setmDate(date);
             mDateButton.setText(mCrime.getmDate().toString());

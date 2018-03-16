@@ -27,14 +27,14 @@ public class CrimeLab
     {
         mCrimes = new ArrayList<>();
 
-        for (int i = 0; i < 10; i++)
+        /*for (int i = 0; i < 10; i++)
         {
             Crime crime = new Crime();
             crime.setmText("Crime #" + i);
             crime.setmSolved(i % 2 == 0); // Every other one
 
             mCrimes.add(crime);
-        }
+        }*/
     }
 
     public List<Crime> getCrimes()
