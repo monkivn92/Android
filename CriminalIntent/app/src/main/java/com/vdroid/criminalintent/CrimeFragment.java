@@ -70,7 +70,7 @@ public class CrimeFragment extends Fragment
 
         mViewPager = (ViewPager) getActivity().findViewById(R.id.crime_view_pager);
 
-        if(mCrime.getmSolved() == null)
+        if(mCrimes.size() == 0)
         {
             JumpToLastBtn.setVisibility(View.INVISIBLE);
             JumpToFirstBtn.setVisibility(View.INVISIBLE);
@@ -104,7 +104,7 @@ public class CrimeFragment extends Fragment
                     @Override
                     public void onTextChanged(CharSequence charSequence, int i, int i1, int i2)
                     {
-
+                        mCrime.setmText(charSequence.toString());
                     }
 
                     @Override
@@ -121,10 +121,8 @@ public class CrimeFragment extends Fragment
 
         mTitleField.setText(mCrime.getmText());
 
-        if(mCrime.getmSolved() != null)
-        {
-            mSolvedCheckBox.setChecked(mCrime.getmSolved());
-        }
+
+        mSolvedCheckBox.setChecked(mCrime.getmSolved());
 
         mSolvedCheckBox.setOnCheckedChangeListener(
                 new CompoundButton.OnCheckedChangeListener()
@@ -217,10 +215,6 @@ public class CrimeFragment extends Fragment
         }
         if (requestCode == 888)
         {
-            if(mCrime.getmSolved() == null)
-            {
-                return;
-            }
 
             Date date = (Date) data.getSerializableExtra("sent_date");
             mCrime.setmDate(date);

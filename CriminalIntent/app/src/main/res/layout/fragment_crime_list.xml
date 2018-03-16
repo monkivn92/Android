@@ -15,7 +15,11 @@
         android:id="@+id/list_empty"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Emptyyyyydffffffyyyyyyyyyy"
+        android:padding="16dp"
+        android:text="There is no crime set"
+        android:textColor="@color/colorAccent"
+        android:textSize="30sp"
+        android:layout_gravity="center"
         android:visibility="visible" />
 
 
