@@ -22,6 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.List;
+import java.util.UUID;
 
 public class CrimeListFragment extends  Fragment
 {
@@ -87,8 +88,12 @@ public class CrimeListFragment extends  Fragment
         }
         else
         {
-            mAdapter.notifyItemChanged(current_pos_clicked_item);
+            mAdapter.setCrimes(crimes);
+            //mAdapter.notifyItemChanged(current_pos_clicked_item);
+            mAdapter.notifyDataSetChanged();
         }
+
+        updateSubtitle();
 
     }
 
@@ -165,6 +170,12 @@ public class CrimeListFragment extends  Fragment
         {
             return mCrimes.size();
         }
+
+        public void setCrimes(List<Crime> crimes)
+        {
+            mCrimes = crimes;
+        }
+
     } //end class
 
     @Override
@@ -172,7 +183,7 @@ public class CrimeListFragment extends  Fragment
     {
         super.onResume();
         updateUI();
-        updateSubtitle();
+        //updateSubtitle();
     }
 
     @Override
@@ -207,7 +218,7 @@ public class CrimeListFragment extends  Fragment
         switch (item.getItemId())
         {
             case R.id.new_crime:
-                Crime crime = new Crime();
+                Crime crime = new Crime(UUID.randomUUID());
                 crime.setmSolved(false);
 
                 CrimeLab.get(getActivity()).addCrime(crime);
