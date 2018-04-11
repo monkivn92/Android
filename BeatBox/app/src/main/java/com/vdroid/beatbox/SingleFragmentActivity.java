@@ -1,15 +1,10 @@
-package com.vdroid.criminalintent;
-
-/**
- * Created by vuongpv on 3/8/18.
- */
+package com.vdroid.beatbox;
 
 import android.support.annotation.LayoutRes;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
 
 public abstract class SingleFragmentActivity extends AppCompatActivity
 {

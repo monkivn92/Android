@@ -3,6 +3,7 @@ package com.vdroid.criminalintent;
 /**
  * Created by vuongpv on 3/8/18.
  */
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -35,6 +36,30 @@ public class CrimeListFragment extends  Fragment
     private boolean mSubtitleVisible;
 
     private TextView mEmptyText;
+
+    private Callbacks mCallbacks;
+
+    /**
+     * Required interface for hosting activities
+     */
+    public interface Callbacks
+    {
+        void onCrimeSelected(Crime crime);
+    }
+
+    @Override
+    public void onAttach(Context context)
+    {
+        super.onAttach(context);
+        mCallbacks = (Callbacks) context;
+    }
+
+    @Override
+    public void onDetach()
+    {
+        super.onDetach();
+        mCallbacks = null;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -69,7 +94,7 @@ public class CrimeListFragment extends  Fragment
         return view;
     }
 
-    private void updateUI()
+    public void updateUI()
     {
         CrimeLab crimeLab = CrimeLab.get(getActivity());
 
@@ -135,8 +160,9 @@ public class CrimeListFragment extends  Fragment
             current_pos_clicked_item = this.getAdapterPosition();
             //Log.d("POS", String.valueOf(current_pos_clicked_item));
             //Intent intent = CrimeActivity.newIntent(getActivity(), mCrime.getmId());
-            Intent intent = CrimePagerActivity.newIntent(getActivity(), mCrime.getmId());
-            startActivity(intent);
+            /*Intent intent = CrimePagerActivity.newIntent(getActivity(), mCrime.getmId());
+            startActivity(intent);*/
+            mCallbacks.onCrimeSelected(mCrime);
         }
 
     }
@@ -223,9 +249,11 @@ public class CrimeListFragment extends  Fragment
 
                 CrimeLab.get(getActivity()).addCrime(crime);
 
-                Intent intent = CrimePagerActivity.newIntent(getActivity(), crime.getmId());
+                /*Intent intent = CrimePagerActivity.newIntent(getActivity(), crime.getmId());
 
-                startActivity(intent);
+                startActivity(intent);*/
+                updateUI();
+                mCallbacks.onCrimeSelected(crime);
                 return true;
 
             case R.id.show_subtitle:

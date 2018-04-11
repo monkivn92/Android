@@ -2,6 +2,7 @@ package com.vdroid.criminalintent;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -74,6 +75,28 @@ public class CrimeFragment extends Fragment
 
     private static final int REQUEST_PHOTO= 2;
 
+    private Callbacks mCallbacks;
+
+    /**
+     * Required interface for hosting activities
+     */
+    public interface Callbacks
+    {
+        void onCrimeUpdated(Crime crime);
+    }
+    @Override
+    public void onAttach(Context context)
+    {
+        super.onAttach(context);
+        mCallbacks = (Callbacks) context;
+    }
+
+    @Override
+    public void onDetach()
+    {
+        super.onDetach();
+        mCallbacks = null;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -147,6 +170,7 @@ public class CrimeFragment extends Fragment
                     public void onTextChanged(CharSequence charSequence, int i, int i1, int i2)
                     {
                         mCrime.setmText(charSequence.toString());
+                        updateCrime();
                     }
 
                     @Override
@@ -173,6 +197,7 @@ public class CrimeFragment extends Fragment
                     public void onCheckedChanged(CompoundButton buttonView,  boolean isChecked)
                     {
                         mCrime.setmSolved(isChecked);
+                        updateCrime();
                     }
 
                 }
@@ -383,6 +408,7 @@ public class CrimeFragment extends Fragment
             Date date = (Date) data.getSerializableExtra("sent_date");
             mCrime.setmDate(date);
             mDateButton.setText(mCrime.getmDate().toString());
+            updateCrime();
         }
         else if (requestCode == REQUEST_CONTACT && data != null)
         {
@@ -458,11 +484,6 @@ public class CrimeFragment extends Fragment
 
             updatePhotoView();
         }
-
-
-
-
-
     }
 
     @Override
@@ -521,5 +542,10 @@ public class CrimeFragment extends Fragment
         }
     }
 
+    private void updateCrime()
+    {
+        CrimeLab.get(getActivity()).updateCrime(mCrime);
+        mCallbacks.onCrimeUpdated(mCrime);
+    }
 
 }
