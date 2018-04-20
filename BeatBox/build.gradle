@@ -25,3 +25,9 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+task demo {
+    String name = 'Gradle'
+    println 'Hello $name'
+    println "Hello $name"
+}

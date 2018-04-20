@@ -1,5 +1,6 @@
 package com.vdroid.photogallery;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -11,16 +12,18 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
+import android.support.v7.widget.SearchView;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PhotoGalleryFragment extends Fragment
+public class PhotoGalleryFragment extends VisibleFragment
 {
     private RecyclerView mPhotoRecyclerView;
 
@@ -40,7 +43,11 @@ public class PhotoGalleryFragment extends Fragment
     {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-        new FetchItemsTask().execute();
+        setHasOptionsMenu(true);
+
+        updateItems();
+
+        PollService.setServiceAlarm(getActivity(), true);
 
         Handler responseHandler = new Handler();
         mThumbnailDownloader = new ThumbnailDownloader<>(responseHandler);
@@ -60,6 +67,59 @@ public class PhotoGalleryFragment extends Fragment
         mThumbnailDownloader.start();
         mThumbnailDownloader.getLooper();
         Log.i(TAG, "Background thread started");
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater)
+    {
+        super.onCreateOptionsMenu(menu, menuInflater);
+        menuInflater.inflate(R.menu.fragment_photo_gallery, menu);
+
+        MenuItem searchItem = menu.findItem(R.id.menu_item_search);
+
+        final SearchView searchView = (SearchView) searchItem.getActionView();
+
+        searchView.setOnQueryTextListener(
+                new SearchView.OnQueryTextListener()
+                {
+                    @Override
+                    public boolean onQueryTextSubmit(String s)
+                    {
+                        Log.d(TAG, "QueryTextSubmit: " + s);
+                        QueryPreferences.setStoredQuery(getActivity(), s);
+                        updateItems();
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onQueryTextChange(String s)
+                    {
+                        Log.d(TAG, "QueryTextChange: " + s);
+                        return false;
+                    }
+                }
+        );
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        switch (item.getItemId())
+        {
+            case R.id.menu_item_clear:
+                QueryPreferences.setStoredQuery(getActivity(), null);
+                updateItems();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void updateItems()
+    {
+        String query = QueryPreferences.getStoredQuery(getActivity());
+        new FetchItemsTask(query).execute();
     }
 
     @Override
@@ -96,20 +156,38 @@ public class PhotoGalleryFragment extends Fragment
         }
     }
 
-    private class PhotoHolder extends RecyclerView.ViewHolder
+    private class PhotoHolder extends RecyclerView.ViewHolder implements View.OnClickListener
     {
         private ImageView mItemImageView;
+        private GalleryItem mGalleryItem;
 
         public PhotoHolder(View itemView)
         {
             super(itemView);
             mItemImageView = (ImageView) itemView;
+            itemView.setOnClickListener(this);
         }
 
         public void bindDrawable(Drawable drawable)
         {
             mItemImageView.setImageDrawable(drawable);
         }
+
+        public void bindGalleryItem(GalleryItem galleryItem)
+        {
+            mGalleryItem = galleryItem;
+        }
+
+        @Override
+        public void onClick(View v)
+        {
+            /*Intent i = new Intent(Intent.ACTION_VIEW, mGalleryItem.getPhotoPageUri());
+            startActivity(i);*/
+            Intent i = PhotoPageActivity.newIntent(getActivity(), mGalleryItem.getPhotoPageUri());
+            startActivity(i);
+        }
+
+
     }
 
     private class PhotoAdapter extends RecyclerView.Adapter<PhotoHolder>
@@ -134,6 +212,7 @@ public class PhotoGalleryFragment extends Fragment
             GalleryItem galleryItem = mGalleryItems.get(position);
             Drawable placeholder = getResources().getDrawable(R.drawable.bill_up_close);
             photoHolder.bindDrawable(placeholder);
+            photoHolder.bindGalleryItem(galleryItem);
             mThumbnailDownloader.queueThumbnail(photoHolder, galleryItem.getUrl());
         }
 
@@ -146,10 +225,24 @@ public class PhotoGalleryFragment extends Fragment
 
     private class FetchItemsTask extends AsyncTask<Void,Void,List<GalleryItem>>
     {
+        private String mQuery;
+        public FetchItemsTask(String query)
+        {
+            mQuery = query;
+        }
+
         @Override
         protected List<GalleryItem> doInBackground(Void... params)
         {
-            return new FlickrFetchr().fetchItems();
+
+            if (mQuery == null)
+            {
+                return new FlickrFetchr().fetchRecentPhotos();
+            }
+            else
+            {
+                return new FlickrFetchr().searchPhotos(mQuery);
+            }
         }
 
         @Override
