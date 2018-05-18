@@ -14,8 +14,10 @@ import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.provider.Settings
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.util.Log
@@ -60,6 +62,20 @@ class MainActivity : AppCompatActivity()
             }
 
         }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        {
+            //if the activity you are launching uses the singleTask launch mode,
+            // it will not run in your task and thus you will immediately receive a cancel result.
+            val myIntent : Intent?  = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:$packageName"))
+            startActivityForResult(myIntent, 2048)
+        }
+        else
+        {
+            ShowChatHead()
+        }
+
     }
 
     fun isPermissionIsGranted(permission: String, activity : Activity): Int
@@ -159,6 +175,44 @@ class MainActivity : AppCompatActivity()
                 return*/
             }
         }
+    }
+
+    fun ShowChatHead(): Unit
+    {
+        show_chathead.setOnClickListener { view ->
+
+                startService(Intent(this@MainActivity, ChatHeadService::class.java))
+                finish()
+
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?)
+    {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 2048)
+        {
+            //Check if the permission is granted or not.
+            Log.e("rok", Activity.RESULT_CANCELED.toString() )
+            Log.e("rok", resultCode.toString() )
+
+            if (resultCode == Activity.RESULT_OK)
+            {
+                ShowChatHead()
+            }
+            else
+            {
+                //Permission is not available
+                Toast.makeText(this,
+                        "Draw over other app permission not available. Closing the application",
+                        Toast.LENGTH_SHORT).show()
+
+                finish()
+            }
+
+
+        }
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean
