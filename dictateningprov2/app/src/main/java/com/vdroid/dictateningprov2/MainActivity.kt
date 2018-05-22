@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
         list_storages?.let{
             for(s in list_storages)
             {
-                Log.e("Path", s)
+                Log.e("Path", File(s).canonicalPath)
             }
             getStarageName(list_storages)
         }
