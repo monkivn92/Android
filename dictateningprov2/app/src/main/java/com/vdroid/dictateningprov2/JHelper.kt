@@ -53,6 +53,43 @@ fun canListFiles(f: File): Boolean
     return f.canRead() && f.isDirectory
 }
 
+fun getStorageName(file : String) : String
+{
+
+    val f = File(file)
+
+    val name: String
+
+    if ("/storage/emulated/legacy" == file || "/storage/emulated/0" == file || "/mnt/sdcard" == file)
+    {
+        name = "Storage"
+    }
+    else if ("/storage/sdcard1" == file)
+    {
+        name = "External Storage"
+    }
+    else
+    {
+        name = f.name
+    }
+
+    return name
+}
+
+fun isExternalStorage(path : String) : Boolean
+{
+
+    if ("/storage/emulated/legacy" == path || "/storage/emulated/0" == path || "/mnt/sdcard" == path)
+    {
+        return false
+    }
+    else if ("/storage/sdcard1" == path)
+    {
+        return true
+    }
+    return false
+}
+
 //For USB OTG
 fun getUsbDrive(): File?
 {
@@ -76,5 +113,37 @@ fun getUsbDrive(): File?
     parent = File("/mnt/sdcard/usb_storage")
 
     return if (parent.exists() && parent.canExecute()) parent else null
+
+}
+
+class JFileSystem(val fpath : String)
+{
+    var path:String
+    var type : Int = 0
+    var label : String
+    var this_item : File
+
+    init
+    {
+        this.path = fpath
+        this.this_item = File(fpath)
+        this.label = getStorageName(fpath)
+        //Log.e("JFF", "${this.label} : $fpath" )
+        //type=3 is for mounted devices
+        if(this.this_item.isDirectory)
+        {
+            this.type = 2
+        }
+        else
+        {
+            this.type = 1
+        }
+
+    }
+
+    fun isMountedDevice(isExtStorage : Boolean) : Unit
+    {
+        this.type = if(isExtStorage) 4 else 3
+    }
 
 }

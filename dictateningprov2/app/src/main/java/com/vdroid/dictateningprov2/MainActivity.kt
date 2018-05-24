@@ -1,5 +1,6 @@
 package com.vdroid.dictateningprov2
 
+import android.Manifest
 import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
@@ -19,14 +20,20 @@ import android.text.TextUtils
 import java.util.*
 import android.os.Build.VERSION.SDK_INT
 import android.R.attr.order
+import android.app.Activity
+import android.content.pm.PackageManager
 import android.support.annotation.DrawableRes
+import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
+import android.widget.Toast
 
 
-
-
-
-
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity()
+{
+    private val GRANTED: Int = 1
+    private val DENIED: Int = 2
+    private val BLOCKED_OR_NEVER_ASKED: Int = 3
+    private val APP_PERMISSIONS_REQUEST: Int = 44
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
@@ -34,147 +41,109 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
-        val list_storages : ArrayList<String> = getStorageDirectories()
-
-        list_storages?.let{
-            for(s in list_storages)
-            {
-                Log.e("Path", File(s).canonicalPath)
-            }
-            getStarageName(list_storages)
+        if(isPermissionIsGranted(Manifest.permission.READ_EXTERNAL_STORAGE, this) != GRANTED)
+        {
+            requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE.toString()))
         }
 
     }
 
-    fun getStarageName(storageDirectories : ArrayList<String>)
+
+    fun isPermissionIsGranted(permission: String, activity : Activity): Int
     {
-        for (file in storageDirectories)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
         {
-            val f = File(file)
-
-            val name: String
-
-            if ("/storage/emulated/legacy" == file || "/storage/emulated/0" == file || "/mnt/sdcard" == file)
-            {
-                name = "Storage"
-            }
-            else if ("/storage/sdcard1" == file)
-            {
-                name = "External Storage"
-            }
-             else
-            {
-                name = f.name
-            }
-
-            if (f.isDirectory() || f.canExecute())
-            {
-                Log.e("Name", name)
-            }
+            return GRANTED
         }
-    }
 
-    fun getStorageDirectories() : ArrayList<String>
-    {
-        // Final set of paths
-        val rv = ArrayList<String>()
-
-        // Primary physical SD-CARD (not emulated)
-        val rawExternalStorage = System.getenv("EXTERNAL_STORAGE")
-
-        // All Secondary SD-CARDs (all exclude primary) separated by ":"
-        val rawSecondaryStoragesStr = System.getenv("SECONDARY_STORAGE")
-
-        // Primary emulated SD-CARD
-        val rawEmulatedStorageTarget = System.getenv("EMULATED_STORAGE_TARGET")
-
-
-        if(rawEmulatedStorageTarget.isNullOrEmpty())
+        if(ContextCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED)
         {
-            // Device has physical external storage; use plain paths.
-            if (rawExternalStorage.isNullOrEmpty())
+            if(!ActivityCompat.shouldShowRequestPermissionRationale(activity, permission))
             {
-                // EXTERNAL_STORAGE undefined; falling back to default.
-                rv.add("/storage/sdcard0")
+                return BLOCKED_OR_NEVER_ASKED
             }
-            else
-            {
-                rv.add(rawExternalStorage)
-            }
+            return DENIED
         }
         else
         {
-            // Device has emulated storage; external storage paths should have
-            // userId burned into them.
-            val rawUserId: String
-
-            if (SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1)
-            {
-                rawUserId = ""
-            }
-            else
-            {
-                val path = Environment.getExternalStorageDirectory().absolutePath
-                val folders = path.split("/")
-                val lastFolder = folders[folders.size - 1]
-                var isDigit = false
-                try
-                {
-                    Integer.valueOf(lastFolder)
-                    isDigit = true
-                }
-                catch (ignored: NumberFormatException)
-                {
-                    /////ignored
-                }
-
-                rawUserId = if (isDigit) lastFolder else ""
-            }
-
-            // /storage/emulated/0[1,2,...]
-            if (rawUserId.isNullOrEmpty())
-            {
-                rv.add(rawEmulatedStorageTarget)
-            }
-            else
-            {
-                rv.add(rawEmulatedStorageTarget + File.separator + rawUserId)
-            }
-
+            return GRANTED
         }
-
-        // Add all secondary storages
-        if (!rawSecondaryStoragesStr.isNullOrEmpty())
-        {
-            // All Secondary SD-CARDs splited into array
-            val rawSecondaryStorages = rawSecondaryStoragesStr.split(File.pathSeparator)
-            for(s in rawSecondaryStorages)
-            {
-                rv.add(s)
-            }
-        }
-
-        /*DO this later
-        if (SDK_INT >= Build.VERSION_CODES.M && checkStoragePermission())
-            rv.clear();
-         */
-
-        if (SDK_INT >= Build.VERSION_CODES.KITKAT)
-        {
-            val strings = getExtSdCardPathsForActivity(this)
-
-            for (s in strings)
-            {
-                val f = File(s)
-                if (!rv.contains(s) && canListFiles(f))
-                    rv.add(s)
-            }
-        }
-
-        return rv
     }
 
+    fun requestPermissions(permission: Array<String>) : Unit
+    {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+        {
+            setResult(Activity.RESULT_OK)
+            finish()
+        }
 
+        var ungrantedPermCount : Int  = 0
+        var permissionsToBeAsked : ArrayList<String> = ArrayList()
+
+        for(p in permission)
+        {
+            if(isPermissionIsGranted(p, this) != GRANTED)
+            {
+                ungrantedPermCount++
+                permissionsToBeAsked.add(p)
+            }
+        }
+
+        if(ungrantedPermCount == 0)
+        {
+            setResult(Activity.RESULT_OK)
+            finish()
+        }
+        else
+        {
+            ActivityCompat.requestPermissions(this,
+                    permissionsToBeAsked.toArray(
+                            Array<String>(permissionsToBeAsked.size, {it->it.toString()})
+                    ),
+                    APP_PERMISSIONS_REQUEST
+            )
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode:Int, permissions : Array<String>, grantResults : IntArray)
+    {
+        when(requestCode)
+        {
+            APP_PERMISSIONS_REQUEST -> {
+                if (grantResults.size > 0)
+                {
+                    var isAllPermissionsGranted = true
+
+                    for (i in 0 until grantResults.size)
+                    {
+                        if (grantResults[i] != PackageManager.PERMISSION_GRANTED)
+                        {
+                            isAllPermissionsGranted = false
+                            break
+                        }
+                    }
+
+                    if (isAllPermissionsGranted)
+                    {
+                        //Log.e("grant", "Grant permission sucessfully")
+                        Toast.makeText(this, "Grant permission sucessfully", Toast.LENGTH_SHORT).show()
+                    }
+                    else
+                    {
+                        //Log.e("grant", "Without permission, this app may be not working properly")
+                        Toast.makeText(this, "Without permission, this app may be not working properly", Toast.LENGTH_SHORT).show()
+                    }
+
+                }
+                else
+                {
+                    //Log.e("grant", "Without permission, this app may be not working properly")
+                    Toast.makeText(this, "Without permission, this app may be not working properly", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean
     {

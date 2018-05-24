@@ -2,6 +2,7 @@ package com.vdroid.dictateningprov2
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.support.v7.app.AppCompatActivity
@@ -9,6 +10,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
+import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.View
 import android.widget.AdapterView
@@ -17,124 +19,193 @@ import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_files.*
 import java.io.File
 import java.time.Duration
+import java.util.ArrayList
+import android.support.annotation.NonNull
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView.ViewHolder
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import android.widget.LinearLayout
+import kotlinx.android.synthetic.main.ff_item.view.*
+
 
 class FilesActivity : AppCompatActivity()
 {
-
-    val APP_PERMISSIONS_REQUEST : Int = 44
-    val DENIED = 1
-    val BLOCKED_OR_NEVER_ASKED = 2
-    val GRANTED = 3
+    lateinit var mRVadapter : FFAdapter
+    //lateinit var mRVviewholder : FFViewHolder
+    var mPathList : MutableList<JFileSystem> = mutableListOf()
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_files)
 
-        if(isPermissionIsGranted(Manifest.permission.READ_EXTERNAL_STORAGE, this) != GRANTED)
-        {
-            requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE.toString()))
+        val list_storages : ArrayList<String> = getStorageDirectories()
+        var set_of_paths : MutableSet<String> = mutableSetOf<String>()
+
+        list_storages?.let{
+            for(s in list_storages)
+            {
+                Log.e("Path", File(s).canonicalPath)
+                set_of_paths.add(File(s).canonicalPath)
+            }
+
+            for (ss in set_of_paths)
+            {
+                var ff = JFileSystem(ss)
+                ff.isMountedDevice(isExternalStorage(ss))
+                mPathList.add(ff)
+            }
+            mRVadapter = FFAdapter(mPathList,this)
+            file_list.layoutManager = LinearLayoutManager(this)
+            file_list.adapter = mRVadapter
+
         }
+
     }
 
-    fun isPermissionIsGranted(permission: String, activity : Activity): Int
-    {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
-        {
-            return GRANTED
-        }
 
-        if(ContextCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED)
+
+    fun getStorageDirectories() : ArrayList<String>
+    {
+        // Final set of paths
+        val rv = ArrayList<String>()
+
+        // Primary physical SD-CARD (not emulated)
+        val rawExternalStorage = System.getenv("EXTERNAL_STORAGE")
+
+        // All Secondary SD-CARDs (all exclude primary) separated by ":"
+        val rawSecondaryStoragesStr = System.getenv("SECONDARY_STORAGE")
+
+        // Primary emulated SD-CARD
+        val rawEmulatedStorageTarget = System.getenv("EMULATED_STORAGE_TARGET")
+
+
+        if(rawEmulatedStorageTarget.isNullOrEmpty())
         {
-            if(!ActivityCompat.shouldShowRequestPermissionRationale(activity, permission))
+            // Device has physical external storage; use plain paths.
+            if (rawExternalStorage.isNullOrEmpty())
             {
-                return BLOCKED_OR_NEVER_ASKED
+                // EXTERNAL_STORAGE undefined; falling back to default.
+                rv.add("/storage/sdcard0")
             }
-            return DENIED
+            else
+            {
+                rv.add(rawExternalStorage)
+            }
         }
         else
         {
-            return GRANTED
-        }
-    }
+            // Device has emulated storage; external storage paths should have
+            // userId burned into them.
+            val rawUserId: String
 
-    fun requestPermissions(permission: Array<String>) : Unit
-    {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
-        {
-            setResult(Activity.RESULT_OK)
-            finish()
-        }
-
-        var ungrantedPermCount : Int  = 0
-        var permissionsToBeAsked : ArrayList<String> = ArrayList()
-
-        for(p in permission)
-        {
-            if(isPermissionIsGranted(p, this) != GRANTED)
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1)
             {
-                ungrantedPermCount++
-                permissionsToBeAsked.add(p)
+                rawUserId = ""
+            }
+            else
+            {
+                val path = Environment.getExternalStorageDirectory().absolutePath
+                val folders = path.split("/")
+                val lastFolder = folders[folders.size - 1]
+                var isDigit = false
+                try
+                {
+                    Integer.valueOf(lastFolder)
+                    isDigit = true
+                }
+                catch (ignored: NumberFormatException)
+                {
+                    /////ignored
+                }
+
+                rawUserId = if (isDigit) lastFolder else ""
+            }
+
+            // /storage/emulated/0[1,2,...]
+            if (rawUserId.isNullOrEmpty())
+            {
+                rv.add(rawEmulatedStorageTarget)
+            }
+            else
+            {
+                rv.add(rawEmulatedStorageTarget + File.separator + rawUserId)
+            }
+
+        }
+
+        // Add all secondary storages
+        if (!rawSecondaryStoragesStr.isNullOrEmpty())
+        {
+            // All Secondary SD-CARDs splited into array
+            val rawSecondaryStorages = rawSecondaryStoragesStr.split(File.pathSeparator)
+            for(s in rawSecondaryStorages)
+            {
+                rv.add(s)
             }
         }
 
-        if(ungrantedPermCount == 0)
+        /*DO this later
+        if (SDK_INT >= Build.VERSION_CODES.M && checkStoragePermission())
+            rv.clear();
+         */
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
         {
-            setResult(Activity.RESULT_OK)
-            finish()
+            val strings = getExtSdCardPathsForActivity(this)
+
+            for (s in strings)
+            {
+                val f = File(s)
+                if (!rv.contains(s) && canListFiles(f))
+                    rv.add(s)
+            }
         }
-        else
-        {
-            ActivityCompat.requestPermissions(this,
-                    permissionsToBeAsked.toArray(
-                            Array<String>(permissionsToBeAsked.size, {it->it.toString()})
-                    ),
-                    APP_PERMISSIONS_REQUEST
-            )
-        }
+
+        return rv
     }
 
-    override fun onRequestPermissionsResult(requestCode:Int, permissions : Array<String>, grantResults : IntArray)
+    class FFAdapter(val paths : MutableList<JFileSystem>, val context: Context) : RecyclerView.Adapter<FFViewHolder>()
     {
-        when(requestCode)
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FFViewHolder
         {
-            APP_PERMISSIONS_REQUEST -> {
-                if (grantResults.size > 0)
-                {
-                    var isAllPermissionsGranted = true
+            return FFViewHolder(LayoutInflater.from(context).inflate(R.layout.ff_item, parent, false))
+        }
 
-                    for (i in 0 until grantResults.size)
-                    {
-                        if (grantResults[i] != PackageManager.PERMISSION_GRANTED)
-                        {
-                            isAllPermissionsGranted = false
-                            break
-                        }
-                    }
+        override fun onBindViewHolder(holder: FFViewHolder, position: Int)
+        {
+            val ff : JFileSystem = paths[position]
 
-                    if (isAllPermissionsGranted)
-                    {
-                        Log.e("grant", "grantOKKKKK")
-                        //setResult(Activity.RESULT_OK)
-                    }
-                    else
-                    {
-                        Log.e("grant", "grantcancel")
-                        //setResult(Activity.RESULT_CANCELED)
-                    }
+            holder.ff_name.text = ff.label
 
-                }
-                else
-                {
-                    Log.e("grant", "grantcancel")
-                    //setResult(Activity.RESULT_CANCELED)
-                }
-
-                /* finish()
-                 return*/
+            when(ff.type)
+            {
+                1 -> holder.ff_icon?.setImageResource(R.drawable.file)
+                2 -> holder.ff_icon?.setImageResource(R.drawable.folder)
+                3 -> holder.ff_icon?.setImageResource(R.drawable.harddisk)
+                4 -> holder.ff_icon?.setImageResource(R.drawable.sd)
             }
+        }
+
+        // Gets the number of animals in the list
+        override fun getItemCount(): Int
+        {
+            return paths.size
+        }
+
+
+        fun setItems(items: MutableList<JFileSystem>)
+        {
+
         }
     }
 
+    class FFViewHolder (view: View) : RecyclerView.ViewHolder(view)
+    {
+        // Holds the TextView that will add each animal to
+        val ff_name = view.ff_name
+        val ff_icon = view.ff_icon
+    }
 
 }
