@@ -26,7 +26,7 @@ import kotlinx.android.synthetic.main.ff_item.view.*
 import java.util.*
 
 
-class FilesActivity : AppCompatActivity()
+class FilesActivityTest : AppCompatActivity()
 {
 
     //lateinit var mRVviewholder : FFViewHolder
@@ -62,7 +62,7 @@ class FilesActivity : AppCompatActivity()
         }
 
         btn_ff_up.setOnClickListener{view ->
-            this@FilesActivity.mRVadapter.backToPreviousItem()
+            this@FilesActivityTest.mRVadapter.backToPreviousItem()
         }
 
     }
