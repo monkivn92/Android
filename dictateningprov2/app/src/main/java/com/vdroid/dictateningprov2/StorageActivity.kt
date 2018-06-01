@@ -1,38 +1,27 @@
 package com.vdroid.dictateningprov2
 
-import android.Manifest
-import android.app.Activity
 import android.content.Context
-import android.content.pm.PackageManager
+import android.content.Intent
 import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
-import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
+import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.util.Log
-import android.view.View
-import kotlinx.android.synthetic.main.activity_files.*
-import java.io.File
-import java.time.Duration
-import android.support.annotation.NonNull
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView.ViewHolder
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
+import kotlinx.android.synthetic.main.activity_files.*
 import kotlinx.android.synthetic.main.ff_item.view.*
+import java.io.File
 import java.util.*
 
-
-class FilesActivityTest : AppCompatActivity()
+class StorageActivity : AppCompatActivity()
 {
-
-    //lateinit var mRVviewholder : FFViewHolder
-    var mPathList : MutableList<JFileSystem> = mutableListOf()
-
-    var mRVadapter : FFAdapter = FFAdapter(this.mPathList,this)
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
@@ -43,9 +32,13 @@ class FilesActivityTest : AppCompatActivity()
         var set_of_paths : MutableSet<String> = mutableSetOf<String>()
 
         list_storages?.let{
+
+            val mPathList : MutableList<JFileSystem> = mutableListOf()
+
+            var mRVadapter : FFAdapter = FFAdapter(mPathList, this)
+
             for(s in list_storages)
             {
-                //Log.e("Path", File(s).canonicalPath)
                 set_of_paths.add(File(s).canonicalPath)
             }
 
@@ -53,20 +46,15 @@ class FilesActivityTest : AppCompatActivity()
             {
                 var ff = JFileSystem(ss)
                 ff.isMountedDevice(isExternalStorage(ss))
-                this.mPathList.add(ff)
+                mPathList.add(ff)
             }
-            this.mRVadapter = FFAdapter(this.mPathList,this)
+            mRVadapter = FFAdapter(mPathList, this)
             file_list.layoutManager = LinearLayoutManager(this)
-            file_list.adapter = this.mRVadapter
+            file_list.adapter = mRVadapter
 
-        }
-
-        btn_ff_up.setOnClickListener{view ->
-            this@FilesActivityTest.mRVadapter.backToPreviousItem()
         }
 
     }
-
 
 
     fun getStorageDirectories() : ArrayList<String>
@@ -169,12 +157,20 @@ class FilesActivityTest : AppCompatActivity()
         return rv
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?)
+    {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if(requestCode == 456)
+        {
+            Log.e("Log from Storagectivity", "vbbbbbbb")
+        }
+    }
 
     class FFAdapter(var paths : MutableList<JFileSystem>, val context: Context) : RecyclerView.Adapter<FFViewHolder>()
     {
         var aPathList : MutableList<JFileSystem>
         val aContext : Context
-        var aPathStack = ArrayDeque<String>()
 
         init {
             this.aPathList = paths
@@ -193,57 +189,14 @@ class FilesActivityTest : AppCompatActivity()
 
             when(ff.type)
             {
-                1 -> holder.ff_icon?.setImageResource(R.drawable.file)
-                2 -> holder.ff_icon?.setImageResource(R.drawable.folder)
                 3 -> holder.ff_icon?.setImageResource(R.drawable.harddisk)
                 4 -> holder.ff_icon?.setImageResource(R.drawable.sd)
             }
             holder.ff_name.setOnClickListener{ view ->
-
-                if(ff.type != 1)
-                {
-                    val file_tmp = File(ff.path)
-
-                    val newPathList : MutableList<JFileSystem> = mutableListOf()
-
-                    val listFileTmp :  Array<String> = file_tmp.list()
-                    listFileTmp.sort()
-
-                    for(p in listFileTmp)
-                    {
-                        newPathList.add(JFileSystem("${ff.path}${File.separator}$p"))
-                    }
-
-                    if(newPathList.size > 0)
-                    {
-                        if(ff.type == 3 || ff.type == 4)
-                        {
-                            this.aPathStack.push("storages")
-                        }
-                        else
-                        {
-                            this.aPathStack.push(file_tmp.parent)
-                        }
-
-                        for (p in this.aPathStack)
-                        {
-                            Log.e("PathStack", p)
-                        }
-
-                        this.aPathList.clear()
-                        this.aPathList.addAll(newPathList)
-                        notifyDataSetChanged()
-                    }
-                    else
-                    {
-                        Toast.makeText(aContext, "This folder is empty", Toast.LENGTH_SHORT).show()
-                    }
-                }
-                else
-                {
-                    Toast.makeText(aContext, "I want this file", Toast.LENGTH_SHORT).show()
-                }
-
+                val intent = Intent(aContext, FilesActivity::class.java)
+                intent.putExtra("sent_path", ff.path)
+                (aContext as StorageActivity).startActivity(intent)
+                aContext.finish()
             }
 
         }
@@ -252,34 +205,6 @@ class FilesActivityTest : AppCompatActivity()
         override fun getItemCount(): Int
         {
             return this.aPathList.size
-        }
-
-        fun backToPreviousItem()
-        {
-            if(this.aPathStack.size > 0)
-            {
-                val path = this.aPathStack.pop()
-
-                val file_tmp = File(path)
-
-                val newPathList : MutableList<JFileSystem> = mutableListOf()
-
-                val listFileTmp :  Array<String> = file_tmp.list()
-
-                listFileTmp.sort()
-
-                for(p in listFileTmp)
-                {
-                    newPathList.add(JFileSystem("$path${File.separator}$p"))
-                }
-
-                if(newPathList.size > 0)
-                {
-                    this.aPathList.clear()
-                    this.aPathList.addAll(newPathList)
-                    notifyDataSetChanged()
-                }
-            }
         }
 
     }

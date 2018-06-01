@@ -26,6 +26,10 @@ import android.support.annotation.DrawableRes
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.widget.Toast
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.IntentFilter
+import android.support.v4.content.LocalBroadcastManager
 
 
 class MainActivity : AppCompatActivity()
@@ -34,6 +38,8 @@ class MainActivity : AppCompatActivity()
     private val DENIED: Int = 2
     private val BLOCKED_OR_NEVER_ASKED: Int = 3
     private val APP_PERMISSIONS_REQUEST: Int = 44
+    private lateinit var mLBReceiver: BroadcastReceiver
+    private var filePath : String = ""
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
@@ -46,8 +52,29 @@ class MainActivity : AppCompatActivity()
             requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE.toString()))
         }
 
+        val filter = IntentFilter()
+        filter.addAction("Path Broadcast")
+        mLBReceiver = object : BroadcastReceiver()
+        {
+            override fun onReceive(context: Context, intent: Intent)
+            {
+                if (intent.action == "Path Broadcast")
+                {
+                    filePath = intent.getStringExtra("result_path")
+                    Log.e("LBPath", filePath)
+                }
+            }
+        }
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(mLBReceiver, filter)
+
     }
 
+    override fun onDestroy()
+    {
+        super.onDestroy()
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mLBReceiver)
+    }
 
     fun isPermissionIsGranted(permission: String, activity : Activity): Int
     {
@@ -160,8 +187,8 @@ class MainActivity : AppCompatActivity()
         return when (item.itemId)
         {
             R.id.action_settings -> {
-                val intent = Intent(this@MainActivity, FilesActivity::class.java)
-                startActivityForResult(intent, 123)
+                val intent = Intent(this@MainActivity, StorageActivity::class.java)
+                startActivity(intent)
                 return true
             }
             else -> super.onOptionsItemSelected(item)
@@ -174,7 +201,7 @@ class MainActivity : AppCompatActivity()
 
         if(requestCode == 123)
         {
-            Log.e("Log from main activity", "aaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            Log.e("Log from main activity", "mainnnnn ${data?.getStringExtra("result_path")}")
         }
     }
 

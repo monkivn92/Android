@@ -3,6 +3,7 @@ package com.vdroid.dictateningprov2
 import android.Manifest
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.support.v7.app.AppCompatActivity
@@ -17,8 +18,10 @@ import kotlinx.android.synthetic.main.activity_files.*
 import java.io.File
 import java.time.Duration
 import android.support.annotation.NonNull
+import android.support.v4.content.LocalBroadcastManager
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView.ViewHolder
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.*
@@ -39,134 +42,37 @@ class FilesActivity : AppCompatActivity()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_files)
 
-        val list_storages : ArrayList<String> = getStorageDirectories()
-        var set_of_paths : MutableSet<String> = mutableSetOf<String>()
+        val sent_path = intent.getStringExtra("sent_path")
 
-        list_storages?.let{
-            for(s in list_storages)
+        if(!sent_path.isNullOrBlank())
+        {
+            val tmp_file = File(sent_path)
+
+            for(p in tmp_file.list())
             {
-                //Log.e("Path", File(s).canonicalPath)
-                set_of_paths.add(File(s).canonicalPath)
+                this.mPathList.add(JFileSystem("${sent_path}${File.separator}$p"))
             }
 
-            for (ss in set_of_paths)
-            {
-                var ff = JFileSystem(ss)
-                ff.isMountedDevice(isExternalStorage(ss))
-                this.mPathList.add(ff)
-            }
             this.mRVadapter = FFAdapter(this.mPathList,this)
+            this.mRVadapter.aPathStack.add("end")
             file_list.layoutManager = LinearLayoutManager(this)
             file_list.adapter = this.mRVadapter
-
-        }
-
-        btn_ff_up.setOnClickListener{view ->
-            this@FilesActivity.mRVadapter.backToPreviousItem()
         }
 
     }
 
-
-
-    fun getStorageDirectories() : ArrayList<String>
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean
     {
-        // Final set of paths
-        val rv = ArrayList<String>()
-
-        // Primary physical SD-CARD (not emulated)
-        val rawExternalStorage = System.getenv("EXTERNAL_STORAGE")
-
-        // All Secondary SD-CARDs (all exclude primary) separated by ":"
-        val rawSecondaryStoragesStr = System.getenv("SECONDARY_STORAGE")
-
-        // Primary emulated SD-CARD
-        val rawEmulatedStorageTarget = System.getenv("EMULATED_STORAGE_TARGET")
-
-
-        if(rawEmulatedStorageTarget.isNullOrEmpty())
+        if (keyCode == KeyEvent.KEYCODE_BACK)
         {
-            // Device has physical external storage; use plain paths.
-            if (rawExternalStorage.isNullOrEmpty())
-            {
-                // EXTERNAL_STORAGE undefined; falling back to default.
-                rv.add("/storage/sdcard0")
-            }
-            else
-            {
-                rv.add(rawExternalStorage)
-            }
+            this.mRVadapter.backToPreviousItem()
+            return true
         }
         else
         {
-            // Device has emulated storage; external storage paths should have
-            // userId burned into them.
-            val rawUserId: String
-
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1)
-            {
-                rawUserId = ""
-            }
-            else
-            {
-                val path = Environment.getExternalStorageDirectory().absolutePath
-                val folders = path.split("/")
-                val lastFolder = folders[folders.size - 1]
-                var isDigit = false
-                try
-                {
-                    Integer.valueOf(lastFolder)
-                    isDigit = true
-                }
-                catch (ignored: NumberFormatException)
-                {
-                    /////ignored
-                }
-
-                rawUserId = if (isDigit) lastFolder else ""
-            }
-
-            // /storage/emulated/0[1,2,...]
-            if (rawUserId.isNullOrEmpty())
-            {
-                rv.add(rawEmulatedStorageTarget)
-            }
-            else
-            {
-                rv.add(rawEmulatedStorageTarget + File.separator + rawUserId)
-            }
-
+            // Return
+            return super.onKeyDown(keyCode, event)
         }
-
-        // Add all secondary storages
-        if (!rawSecondaryStoragesStr.isNullOrEmpty())
-        {
-            // All Secondary SD-CARDs splited into array
-            val rawSecondaryStorages = rawSecondaryStoragesStr.split(File.pathSeparator)
-            for(s in rawSecondaryStorages)
-            {
-                rv.add(s)
-            }
-        }
-
-        /*DO this later
-        if (SDK_INT >= Build.VERSION_CODES.M && checkStoragePermission())
-            rv.clear();
-         */
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
-        {
-            val strings = getExtSdCardPathsForActivity(this)
-
-            for (s in strings)
-            {
-                val f = File(s)
-                if (!rv.contains(s) && canListFiles(f))
-                    rv.add(s)
-            }
-        }
-
-        return rv
     }
 
 
@@ -195,8 +101,10 @@ class FilesActivity : AppCompatActivity()
             {
                 1 -> holder.ff_icon?.setImageResource(R.drawable.file)
                 2 -> holder.ff_icon?.setImageResource(R.drawable.folder)
+                /*
                 3 -> holder.ff_icon?.setImageResource(R.drawable.harddisk)
                 4 -> holder.ff_icon?.setImageResource(R.drawable.sd)
+                */
             }
             holder.ff_name.setOnClickListener{ view ->
 
@@ -216,14 +124,7 @@ class FilesActivity : AppCompatActivity()
 
                     if(newPathList.size > 0)
                     {
-                        if(ff.type == 3 || ff.type == 4)
-                        {
-                            this.aPathStack.push("storages")
-                        }
-                        else
-                        {
-                            this.aPathStack.push(file_tmp.parent)
-                        }
+                        this.aPathStack.push(file_tmp.parent)
 
                         for (p in this.aPathStack)
                         {
@@ -242,6 +143,11 @@ class FilesActivity : AppCompatActivity()
                 else
                 {
                     Toast.makeText(aContext, "I want this file", Toast.LENGTH_SHORT).show()
+                    val intent = Intent()
+                    intent.action = "Path Broadcast"
+                    intent.putExtra("result_path", ff.path)
+                    LocalBroadcastManager.getInstance(aContext).sendBroadcast(intent)
+                    (aContext as FilesActivity).finish()
                 }
 
             }
@@ -259,25 +165,32 @@ class FilesActivity : AppCompatActivity()
             if(this.aPathStack.size > 0)
             {
                 val path = this.aPathStack.pop()
-
-                val file_tmp = File(path)
-
-                val newPathList : MutableList<JFileSystem> = mutableListOf()
-
-                val listFileTmp :  Array<String> = file_tmp.list()
-
-                listFileTmp.sort()
-
-                for(p in listFileTmp)
+                Log.e("path", path)
+                if(path == "end")
                 {
-                    newPathList.add(JFileSystem("$path${File.separator}$p"))
+                    (context as FilesActivity).finish()
                 }
-
-                if(newPathList.size > 0)
+                else
                 {
-                    this.aPathList.clear()
-                    this.aPathList.addAll(newPathList)
-                    notifyDataSetChanged()
+                    val file_tmp = File(path)
+
+                    val newPathList : MutableList<JFileSystem> = mutableListOf()
+
+                    val listFileTmp :  Array<String> = file_tmp.list()
+
+                    listFileTmp.sort()
+
+                    for(p in listFileTmp)
+                    {
+                        newPathList.add(JFileSystem("$path${File.separator}$p"))
+                    }
+
+                    if(newPathList.size > 0)
+                    {
+                        this.aPathList.clear()
+                        this.aPathList.addAll(newPathList)
+                        notifyDataSetChanged()
+                    }
                 }
             }
         }
