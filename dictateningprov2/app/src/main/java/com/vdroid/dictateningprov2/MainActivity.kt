@@ -30,6 +30,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.IntentFilter
 import android.support.v4.content.LocalBroadcastManager
+import android.view.View
 
 
 class MainActivity : AppCompatActivity()
@@ -68,6 +69,12 @@ class MainActivity : AppCompatActivity()
 
         LocalBroadcastManager.getInstance(this).registerReceiver(mLBReceiver, filter)
 
+    }
+
+    override fun onResume()
+    {
+        super.onResume()
+        hideNavigationBar()
     }
 
     override fun onDestroy()
@@ -191,6 +198,10 @@ class MainActivity : AppCompatActivity()
                 startActivity(intent)
                 return true
             }
+            R.id.action_exit -> {
+                finish()
+                return true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -202,6 +213,24 @@ class MainActivity : AppCompatActivity()
         if(requestCode == 123)
         {
             Log.e("Log from main activity", "mainnnnn ${data?.getStringExtra("result_path")}")
+        }
+    }
+
+    fun hideNavigationBar() : Unit
+    {
+        val decorView : View = window.decorView
+        decorView.setOnSystemUiVisibilityChangeListener {visibility ->
+            Log.i("LOG visibility","Menu Shown is this $visibility")
+            decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean)
+    {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus)
+        {
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
         }
     }
 
