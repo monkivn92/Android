@@ -1,0 +1,3 @@
+--- READ error logs carefully, pleaseeeee
+
+--- fun inject(mainActivity: MainActivity) -- need to be commented out to fix conflict with inject(mainActivity: MainActivity) in     ChatComponent. Be aware of the confliction due to inject() function 

@@ -7,15 +7,20 @@ import com.vdroid.daggertwopart2.NetworkUtils
 import com.vdroid.daggertwopart2.RxUtils
 import javax.inject.Inject
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity()
+{
 
-    @Inject lateinit var rxUtils: RxUtils
-    @Inject lateinit var networkUtils: NetworkUtils
+    @Inject lateinit var chatInteract: IChatInteract
+    @Inject lateinit var chatStateController: IChatStateController
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+
+    override fun onCreate(savedInstanceState: Bundle?)
+    {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        DTApp.getComponent().inject(this)
+        DTApp.getApp().plusChatComponent()?.inject(this)
+        chatInteract.doSomething()
+        chatStateController.doSomething()
 
     }
 }
