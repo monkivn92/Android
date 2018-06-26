@@ -2,175 +2,94 @@ package com.vdroid.dictateningprov2
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
+import android.support.v4.content.LocalBroadcastManager
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import com.vdroid.dictateningprov2.utils.FileFolderUtils
 import kotlinx.android.synthetic.main.activity_files.*
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.ff_item.view.*
 import java.io.File
 import java.util.*
+import kotlin.collections.ArrayList
 
 class StorageActivity : AppCompatActivity()
 {
+    lateinit var mRVadapter : FFAdapter
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_files)
 
-        val list_storages : ArrayList<String> = getStorageDirectories()
-        var set_of_paths : MutableSet<String> = mutableSetOf<String>()
+        val list_storages : ArrayList<JFileSystem> = FileFolderUtils.getAllStorages(this)
 
-        list_storages?.let{
-
-            val mPathList : MutableList<JFileSystem> = mutableListOf()
-
-            var mRVadapter : FFAdapter = FFAdapter(mPathList, this)
-
-            for(s in list_storages)
-            {
-                set_of_paths.add(File(s).canonicalPath)
-            }
-
-            for (ss in set_of_paths)
-            {
-                var ff = JFileSystem(ss)
-                ff.isMountedDevice(isExternalStorage(ss))
-                mPathList.add(ff)
-            }
-            mRVadapter = FFAdapter(mPathList, this)
-            file_list.layoutManager = LinearLayoutManager(this)
-            file_list.adapter = mRVadapter
-
-        }
-
+        mRVadapter = FFAdapter(list_storages, this)
+        this.mRVadapter.aPathStack.add("end")
+        file_list.layoutManager = LinearLayoutManager(this)
+        file_list.adapter = mRVadapter
     }
 
-
-    fun getStorageDirectories() : ArrayList<String>
+    override fun onCreateOptionsMenu(menu: Menu): Boolean
     {
-        // Final set of paths
-        val rv = ArrayList<String>()
+        // Inflate the menu; this adds items to the action bar if it is present.
+        menuInflater.inflate(R.menu.file_menu, menu)
+        return true
+    }
 
-        // Primary physical SD-CARD (not emulated)
-        val rawExternalStorage = System.getenv("EXTERNAL_STORAGE")
-
-        // All Secondary SD-CARDs (all exclude primary) separated by ":"
-        val rawSecondaryStoragesStr = System.getenv("SECONDARY_STORAGE")
-
-        // Primary emulated SD-CARD
-        val rawEmulatedStorageTarget = System.getenv("EMULATED_STORAGE_TARGET")
-
-
-        if(rawEmulatedStorageTarget.isNullOrEmpty())
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean
+    {
+        if (keyCode == KeyEvent.KEYCODE_BACK)
         {
-            // Device has physical external storage; use plain paths.
-            if (rawExternalStorage.isNullOrEmpty())
-            {
-                // EXTERNAL_STORAGE undefined; falling back to default.
-                rv.add("/storage/sdcard0")
-            }
-            else
-            {
-                rv.add(rawExternalStorage)
-            }
+            this.mRVadapter.backToPreviousItem()
+            return true
         }
         else
         {
-            // Device has emulated storage; external storage paths should have
-            // userId burned into them.
-            val rawUserId: String
-
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1)
-            {
-                rawUserId = ""
-            }
-            else
-            {
-                val path = Environment.getExternalStorageDirectory().absolutePath
-                val folders = path.split("/")
-                val lastFolder = folders[folders.size - 1]
-                var isDigit = false
-                try
-                {
-                    Integer.valueOf(lastFolder)
-                    isDigit = true
-                }
-                catch (ignored: NumberFormatException)
-                {
-                    /////ignored
-                }
-
-                rawUserId = if (isDigit) lastFolder else ""
-            }
-
-            // /storage/emulated/0[1,2,...]
-            if (rawUserId.isNullOrEmpty())
-            {
-                rv.add(rawEmulatedStorageTarget)
-            }
-            else
-            {
-                rv.add(rawEmulatedStorageTarget + File.separator + rawUserId)
-            }
-
-        }
-
-        // Add all secondary storages
-        if (!rawSecondaryStoragesStr.isNullOrEmpty())
-        {
-            // All Secondary SD-CARDs splited into array
-            val rawSecondaryStorages = rawSecondaryStoragesStr.split(File.pathSeparator)
-            for(s in rawSecondaryStorages)
-            {
-                rv.add(s)
-            }
-        }
-
-        /*DO this later
-        if (SDK_INT >= Build.VERSION_CODES.M && checkStoragePermission())
-            rv.clear();
-         */
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
-        {
-            val strings = getExtSdCardPathsForActivity(this)
-
-            for (s in strings)
-            {
-                val f = File(s)
-                if (!rv.contains(s) && canListFiles(f))
-                    rv.add(s)
-            }
-        }
-
-        return rv
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?)
-    {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if(requestCode == 456)
-        {
-            Log.e("Log from Storagectivity", "vbbbbbbb")
+            // Return
+            return super.onKeyDown(keyCode, event)
         }
     }
 
-    class FFAdapter(var paths : MutableList<JFileSystem>, val context: Context) : RecyclerView.Adapter<FFViewHolder>()
+    override fun onOptionsItemSelected(item: MenuItem): Boolean
     {
-        var aPathList : MutableList<JFileSystem>
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        return when (item.itemId)
+        {
+            R.id.select_this -> {
+                val intent = Intent()
+                intent.action = "Path Broadcast"
+                intent.putExtra("result_path", this.mRVadapter.cur_path)
+                LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+                finish()
+                return true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    class FFAdapter(var paths : ArrayList<JFileSystem>, val context: Context) : RecyclerView.Adapter<FFViewHolder>()
+    {
+        var aPathList : ArrayList<JFileSystem>
         val aContext : Context
+        var aPathStack = ArrayDeque<String>()
+
+        var cur_path : String = ""
+
+        private var selectedPos = RecyclerView.NO_POSITION
 
         init {
             this.aPathList = paths
@@ -185,18 +104,72 @@ class StorageActivity : AppCompatActivity()
         override fun onBindViewHolder(holder: FFViewHolder, position: Int)
         {
             val ff : JFileSystem = this.aPathList[position]
+
+            holder.itemView.isSelected = this.selectedPos == position
             holder.ff_name.text = ff.label
+
+            if(holder.itemView.isSelected)
+            {
+                holder.itemView.ff_name.setTypeface(null, Typeface.BOLD_ITALIC)
+                holder.itemView.setBackgroundColor(Color.parseColor("#c0c0c0"))
+            }
 
             when(ff.type)
             {
+                1 -> holder.ff_icon?.setImageResource(R.drawable.file)
+                2 -> holder.ff_icon?.setImageResource(R.drawable.folder)
                 3 -> holder.ff_icon?.setImageResource(R.drawable.harddisk)
                 4 -> holder.ff_icon?.setImageResource(R.drawable.sd)
             }
+
             holder.ff_name.setOnClickListener{ view ->
-                val intent = Intent(aContext, FilesActivity::class.java)
-                intent.putExtra("sent_path", ff.path)
-                (aContext as StorageActivity).startActivity(intent)
-                aContext.finish()
+
+                cur_path = ff.path
+
+                if(ff.type != 1)
+                {
+                    val file_tmp = File(ff.path)
+
+                    val newPathList : ArrayList<JFileSystem> = ArrayList<JFileSystem>()
+
+                    val listFileTmp :  Array<String> = file_tmp.list()
+
+                    listFileTmp.sort()
+
+                    for(p in listFileTmp)
+                    {
+                        newPathList.add(JFileSystem("${ff.path}${File.separator}$p"))
+                    }
+
+                    if(ff.type == 2)
+                    {
+                        this.aPathStack.push(file_tmp.parent)
+                    }
+
+                    if(newPathList.size > 0)
+                    {
+                        for (p in this.aPathStack)
+                        {
+                            Log.e("PathStack", p)
+                        }
+
+                        this.aPathList.clear()
+                        this.aPathList.addAll(newPathList)
+                        notifyDataSetChanged()
+                    }
+                    else
+                    {
+                        this.aPathList.clear()
+                        notifyDataSetChanged()
+                        Toast.makeText(aContext, "This folder is empty", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                else
+                {
+                    notifyItemChanged(selectedPos)
+                    selectedPos = holder.adapterPosition
+                    notifyItemChanged(selectedPos)
+                }
             }
 
         }
@@ -205,6 +178,44 @@ class StorageActivity : AppCompatActivity()
         override fun getItemCount(): Int
         {
             return this.aPathList.size
+        }
+
+        fun backToPreviousItem()
+        {
+            if(this.aPathStack.size > 0)
+            {
+                var newPathList : ArrayList<JFileSystem> = ArrayList<JFileSystem>()
+
+                val path = this.aPathStack.pop()
+
+                Log.e("path", path)
+
+                if(path == "end")
+                {
+                    newPathList = FileFolderUtils.getAllStorages(this.aContext)
+                    this.aPathStack.add("end")
+                }
+                else
+                {
+                    val file_tmp = File(path)
+
+                    val listFileTmp :  Array<String> = file_tmp.list()
+
+                    listFileTmp.sort()
+
+                    for(p in listFileTmp)
+                    {
+                        newPathList.add(JFileSystem("$path${File.separator}$p"))
+                    }
+                }
+
+                if(newPathList.size > 0)
+                {
+                    this.aPathList.clear()
+                    this.aPathList.addAll(newPathList)
+                    notifyDataSetChanged()
+                }
+            }
         }
 
     }
