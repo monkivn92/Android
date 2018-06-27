@@ -30,6 +30,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.IntentFilter
 import android.support.v4.content.LocalBroadcastManager
+import android.view.KeyEvent
 import android.view.View
 
 
@@ -47,12 +48,12 @@ class MainActivity : AppCompatActivity()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
-
+        /////
         if(isPermissionIsGranted(Manifest.permission.READ_EXTERNAL_STORAGE, this) != GRANTED)
         {
             requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE.toString()))
         }
-
+        ////
         val filter = IntentFilter()
         filter.addAction("Path Broadcast")
         mLBReceiver = object : BroadcastReceiver()
@@ -66,8 +67,24 @@ class MainActivity : AppCompatActivity()
                 }
             }
         }
-
         LocalBroadcastManager.getInstance(this).registerReceiver(mLBReceiver, filter)
+        
+        input_txt.setOnKeyListener { _, keyCode, event ->
+            if ( keyCode == KeyEvent.KEYCODE_ENTER)
+            {
+                //Toast.makeText(this, input_txt.text, Toast.LENGTH_SHORT).show()
+                if(input_txt.text.isNotBlank())
+                {
+                    text_editor.append("${input_txt.text}\n")
+                }
+                input_txt.setText("")
+                true
+            }
+            else false
+
+        }
+        
+        
 
     }
 

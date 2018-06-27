@@ -15,6 +15,7 @@
         <activity
             android:name=".MainActivity"
             android:label="Dictatenting Pro"
+            android:windowSoftInputMode="adjustPan"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -22,13 +23,6 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-        <activity
-            android:name=".FilesActivity"
-            android:parentActivityName=".StorageActivity"
-            android:label="Choose a file"
-            android:screenOrientation="portrait">
-
         </activity>
 
         <activity android:name=".StorageActivity"

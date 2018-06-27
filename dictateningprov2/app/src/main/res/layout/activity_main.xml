@@ -79,7 +79,7 @@
             android:layout_width="60dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            tools:text="00:00"
+            android:text="00:00"
             app:layout_constraintStart_toStartOf="@+id/seekbar"
             app:layout_constraintTop_toBottomOf="@+id/seekbar" />
 
@@ -89,33 +89,47 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="right"
-            tools:text="10:55"
+            android:text="10:55"
             app:layout_constraintEnd_toEndOf="@+id/seekbar"
             app:layout_constraintTop_toBottomOf="@+id/seekbar" />
 
         <EditText
             android:id="@+id/text_editor"
+            style="@style/Widget.AppCompat.EditText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="50dp"
-            android:ems="10"
-            android:inputType="textMultiLine"
-            android:scrollbars="vertical"
-            android:gravity="start|top"
-            android:enabled="true"
-            android:minLines="3"
-            android:maxLines="3"
-            android:isScrollContainer="true"
-            android:focusable="true"
-            android:padding="10dp"
-            android:textSize="18sp"
-            android:lineSpacingMultiplier="1.2"
-            android:scrollbarAlwaysDrawVerticalTrack="true"
+            android:layout_marginTop="100dp"
             android:background="@drawable/edittext_border"
-            style="@style/Widget.AppCompat.EditText"
+            android:ems="10"
+            android:enabled="true"
+
+            android:gravity="start|top"
+            android:inputType="textMultiLine"
+            android:isScrollContainer="true"
+            android:lineSpacingMultiplier="1.2"
+            android:maxLines="10"
+            android:minLines="10"
+            android:padding="10dp"
+            android:scrollbarAlwaysDrawVerticalTrack="true"
+            android:scrollbars="vertical"
+            android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="@+id/seekbar"
             app:layout_constraintStart_toStartOf="@+id/seekbar"
             app:layout_constraintTop_toBottomOf="@+id/seekbar" />
+
+        <EditText
+            android:id="@+id/input_txt"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:ems="10"
+            android:textSize="18sp"
+            android:focusable="true"
+            android:inputType="textPersonName"
+            app:layout_constraintEnd_toEndOf="@+id/seekbar"
+            app:layout_constraintStart_toStartOf="@+id/seekbar"
+            app:layout_constraintTop_toBottomOf="@+id/seekbar"
+            tools:text="Text" />
 
     </android.support.constraint.ConstraintLayout>
 
