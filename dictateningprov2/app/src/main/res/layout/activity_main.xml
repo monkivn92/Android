@@ -20,6 +20,106 @@
 
     </android.support.design.widget.AppBarLayout>
 
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/constraintLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_anchor="@+id/constraintLayout"
+        app:layout_anchorGravity="top|center">
+
+        <ImageButton
+            android:id="@+id/play_btn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="70dp"
+            android:background="@drawable/roundedbutton"
+            android:src="@drawable/play"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/play" />
+
+        <ImageButton
+            android:id="@+id/skip_bw_btn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="32dp"
+            android:background="@drawable/roundedbutton"
+            app:layout_constraintEnd_toStartOf="@+id/play_btn"
+            app:layout_constraintTop_toTopOf="@+id/play_btn"
+            app:srcCompat="@drawable/skip_backward" />
+
+        <ImageButton
+            android:id="@+id/skip_fw_btn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="32dp"
+            android:background="@drawable/roundedbutton"
+            app:layout_constraintStart_toEndOf="@+id/play_btn"
+            app:layout_constraintTop_toTopOf="@+id/play_btn"
+            app:srcCompat="@drawable/skip_forward" />
+
+
+        <SeekBar
+            android:id="@+id/seekbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="24dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="24dp"
+            android:background="#e0f2f1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/play_btn" />
+
+        <TextView
+            android:id="@+id/playing_time_txt"
+            android:layout_width="60dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            tools:text="00:00"
+            app:layout_constraintStart_toStartOf="@+id/seekbar"
+            app:layout_constraintTop_toBottomOf="@+id/seekbar" />
+
+        <TextView
+            android:id="@+id/duration_txt"
+            android:layout_width="60dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="right"
+            tools:text="10:55"
+            app:layout_constraintEnd_toEndOf="@+id/seekbar"
+            app:layout_constraintTop_toBottomOf="@+id/seekbar" />
+
+        <EditText
+            android:id="@+id/text_editor"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:ems="10"
+            android:inputType="textMultiLine"
+            android:scrollbars="vertical"
+            android:gravity="start|top"
+            android:enabled="true"
+            android:minLines="3"
+            android:maxLines="3"
+            android:isScrollContainer="true"
+            android:focusable="true"
+            android:padding="10dp"
+            android:textSize="18sp"
+            android:lineSpacingMultiplier="1.2"
+            android:scrollbarAlwaysDrawVerticalTrack="true"
+            android:background="@drawable/edittext_border"
+            style="@style/Widget.AppCompat.EditText"
+            app:layout_constraintEnd_toEndOf="@+id/seekbar"
+            app:layout_constraintStart_toStartOf="@+id/seekbar"
+            app:layout_constraintTop_toBottomOf="@+id/seekbar" />
+
+    </android.support.constraint.ConstraintLayout>
+
+
 
 
 </android.support.design.widget.CoordinatorLayout>
