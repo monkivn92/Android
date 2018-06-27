@@ -48,12 +48,13 @@ class MainActivity : AppCompatActivity()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
-        /////
+        //Request permission
         if(isPermissionIsGranted(Manifest.permission.READ_EXTERNAL_STORAGE, this) != GRANTED)
         {
             requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE.toString()))
         }
-        ////
+
+        //Publish and register broadcast receiver
         val filter = IntentFilter()
         filter.addAction("Path Broadcast")
         mLBReceiver = object : BroadcastReceiver()
@@ -68,7 +69,8 @@ class MainActivity : AppCompatActivity()
             }
         }
         LocalBroadcastManager.getInstance(this).registerReceiver(mLBReceiver, filter)
-        
+
+        //Listen key event when typing input
         input_txt.setOnKeyListener { _, keyCode, event ->
             if ( keyCode == KeyEvent.KEYCODE_ENTER)
             {
@@ -83,9 +85,6 @@ class MainActivity : AppCompatActivity()
             else false
 
         }
-        
-        
-
     }
 
     override fun onResume()
