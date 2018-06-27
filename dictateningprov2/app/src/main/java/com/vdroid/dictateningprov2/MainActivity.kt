@@ -25,13 +25,15 @@ import android.content.pm.PackageManager
 import android.support.annotation.DrawableRes
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
-import android.widget.Toast
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.IntentFilter
 import android.support.v4.content.LocalBroadcastManager
 import android.view.KeyEvent
 import android.view.View
+import android.widget.*
+import com.vdroid.dictateningprov2.R.*
+import com.vdroid.dictateningprov2.utils.MPManager
 
 
 class MainActivity : AppCompatActivity()
@@ -41,13 +43,30 @@ class MainActivity : AppCompatActivity()
     private val BLOCKED_OR_NEVER_ASKED: Int = 3
     private val APP_PERMISSIONS_REQUEST: Int = 44
     private lateinit var mLBReceiver: BroadcastReceiver
-    private var filePath : String = ""
+    var filePath : String = ""
+
+    lateinit var mSeekBar : SeekBar
+    lateinit var mPlayingTime : TextView
+    lateinit var mDuration : TextView
+    lateinit var mPlayBtn : ImageButton
+    lateinit var mSkipFW : ImageButton
+    lateinit var mSkipBW : ImageButton
+
+    lateinit var mpm : MPManager
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
+
+        mSeekBar= seekbar
+        mPlayingTime = playing_time_txt
+        mDuration = duration_txt
+        mPlayBtn = play_btn
+        mSkipFW = skip_fw_btn
+        mSkipBW = skip_bw_btn
+
         //Request permission
         if(isPermissionIsGranted(Manifest.permission.READ_EXTERNAL_STORAGE, this) != GRANTED)
         {
@@ -85,12 +104,26 @@ class MainActivity : AppCompatActivity()
             else false
 
         }
+
+        //Music player
+        mpm  = MPManager(this)
+
+        play_btn.setOnClickListener{v ->
+            mpm.play()
+        }
+
     }
 
     override fun onResume()
     {
         super.onResume()
         hideNavigationBar()
+    }
+
+    override fun onStop()
+    {
+        super.onStop()
+        mpm.pause()
     }
 
     override fun onDestroy()
