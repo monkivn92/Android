@@ -9,20 +9,14 @@ import android.view.Menu
 import android.view.MenuItem
 
 import kotlinx.android.synthetic.main.activity_main.*
-import java.io.BufferedReader
-import java.io.File
-import java.io.FileReader
-import android.os.Environment.getExternalStorageDirectory
+
 import android.os.Build
-import android.os.Build.VERSION.SDK_INT
-import android.os.Environment
-import android.text.TextUtils
+
 import java.util.*
-import android.os.Build.VERSION.SDK_INT
-import android.R.attr.order
+
 import android.app.Activity
 import android.content.pm.PackageManager
-import android.support.annotation.DrawableRes
+
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.content.BroadcastReceiver
@@ -32,8 +26,13 @@ import android.support.v4.content.LocalBroadcastManager
 import android.view.KeyEvent
 import android.view.View
 import android.widget.*
-import com.vdroid.dictateningprov2.R.*
+
 import com.vdroid.dictateningprov2.utils.MPManager
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStreamWriter
+import java.nio.file.Path
+import java.nio.file.Paths
 
 
 class MainActivity : AppCompatActivity()
@@ -43,7 +42,9 @@ class MainActivity : AppCompatActivity()
     private val BLOCKED_OR_NEVER_ASKED: Int = 3
     private val APP_PERMISSIONS_REQUEST: Int = 44
     private lateinit var mLBReceiver: BroadcastReceiver
+    private lateinit var mLBReceiverSave: BroadcastReceiver
     var filePath : String = ""
+    var filePathSave : String = ""
 
     lateinit var mSeekBar : SeekBar
     lateinit var mPlayingTime : TextView
@@ -83,11 +84,29 @@ class MainActivity : AppCompatActivity()
                 if (intent.action == "Path Broadcast")
                 {
                     filePath = intent.getStringExtra("result_path")
+                    mpm.reset()
                     Log.e("LBPath", filePath)
                 }
             }
         }
         LocalBroadcastManager.getInstance(this).registerReceiver(mLBReceiver, filter)
+
+        //Publish and register broadcast receiver for saving a file
+        val filter_save = IntentFilter()
+        filter_save.addAction("Save Path Broadcast")
+        mLBReceiverSave = object : BroadcastReceiver()
+        {
+            override fun onReceive(context: Context, intent: Intent)
+            {
+                if (intent.action == "Save Path Broadcast")
+                {
+                    filePathSave = intent.getStringExtra("result_path")
+                    writeFileToDisk()
+                    Log.e("LBPathSave", filePathSave)
+                }
+            }
+        }
+        LocalBroadcastManager.getInstance(this).registerReceiver(mLBReceiverSave, filter_save)
 
         //Listen key event when typing input
         input_txt.setOnKeyListener { _, keyCode, event ->
@@ -112,6 +131,14 @@ class MainActivity : AppCompatActivity()
             mpm.play()
         }
 
+        skip_fw_btn.setOnClickListener{v ->
+            mpm.skipFW()
+        }
+
+        skip_bw_btn.setOnClickListener{v ->
+            mpm.skipBW()
+        }
+
     }
 
     override fun onResume()
@@ -130,6 +157,7 @@ class MainActivity : AppCompatActivity()
     {
         super.onDestroy()
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mLBReceiver)
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mLBReceiverSave)
     }
 
     fun isPermissionIsGranted(permission: String, activity : Activity): Int
@@ -242,13 +270,18 @@ class MainActivity : AppCompatActivity()
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId)
         {
-            R.id.action_settings -> {
+            R.id.select_file -> {
                 val intent = Intent(this@MainActivity, StorageActivity::class.java)
                 startActivity(intent)
                 return true
             }
             R.id.action_exit -> {
                 finish()
+                return true
+            }
+            R.id.save_text -> {
+                val intent = Intent(this@MainActivity, SaveFileActivity::class.java)
+                startActivity(intent)
                 return true
             }
             else -> super.onOptionsItemSelected(item)
@@ -280,6 +313,25 @@ class MainActivity : AppCompatActivity()
         if (hasFocus)
         {
             window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+        }
+    }
+
+    fun writeFileToDisk()
+    {
+        try
+        {
+            val datfile : File = File(filePathSave)
+            val fOut : FileOutputStream  = FileOutputStream(datfile)
+            val myOutWriter : OutputStreamWriter  = OutputStreamWriter(fOut)
+
+            myOutWriter.write(text_editor.text.toString())
+            myOutWriter.close()
+            fOut.close()
+            Toast.makeText(applicationContext, "Finished writing file to storage", Toast.LENGTH_SHORT).show()
+        }
+        catch (e : Exception )
+        {
+           Toast.makeText(applicationContext, "Write failure", Toast.LENGTH_SHORT).show()
         }
     }
 

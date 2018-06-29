@@ -15,6 +15,7 @@
         <activity
             android:name=".MainActivity"
             android:label="Dictatenting Pro"
+            android:configChanges="orientation"
             android:windowSoftInputMode="adjustPan"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar">
@@ -27,8 +28,16 @@
 
         <activity android:name=".StorageActivity"
                 android:label="Choose a storage"
+                android:configChanges="orientation"
                 android:parentActivityName=".MainActivity"
                 android:screenOrientation="portrait">
+        </activity>
+
+        <activity android:name=".SaveFileActivity"
+            android:label="Choose a storage"
+            android:configChanges="orientation"
+            android:parentActivityName=".MainActivity"
+            android:screenOrientation="portrait">
         </activity>
 
     </application>

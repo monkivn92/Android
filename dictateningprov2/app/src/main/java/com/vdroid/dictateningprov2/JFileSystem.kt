@@ -8,12 +8,21 @@ class JFileSystem(val fpath : String)
     var type : Int = 0
     var label : String
     var this_item : File
-
+    val STRING_LIMIT : Int = 40
     init
     {
         this.path = fpath
         this.this_item = File(fpath)
-        this.label = FileFolderUtils.getStorageName(fpath)
+        val temp_label : String = FileFolderUtils.getStorageName(fpath)
+
+        if(temp_label.length > STRING_LIMIT)
+        {
+            this.label = temp_label.substring(0,25) + "..."
+        }
+        else
+        {
+            this.label = temp_label
+        }
 
         if(this.this_item.isDirectory)
         {

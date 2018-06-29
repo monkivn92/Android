@@ -41,7 +41,7 @@ class MPManager(private val mainActivity: MainActivity)
             {
                 loadFile()
             }
-            mainActivity.mPlayBtn.setImageResource(R.drawable.play)
+            mainActivity.mPlayBtn.setImageResource(R.drawable.pause)
             mp.start()
             updateUI()
         }
@@ -55,7 +55,7 @@ class MPManager(private val mainActivity: MainActivity)
     {
         if(mp.isPlaying)
         {
-            mainActivity.mPlayBtn.setImageResource(R.drawable.pause)
+            mainActivity.mPlayBtn.setImageResource(R.drawable.play)
             mp.pause()
             stopUpdateUI()
         }
@@ -75,6 +75,41 @@ class MPManager(private val mainActivity: MainActivity)
         catch (ex : Exception)
         {
             Toast.makeText(mainActivity, "Please select a valid music file first", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun reset()
+    {
+        mp.reset()
+        resetState()
+        loadFile()
+        stopUpdateUI()
+    }
+
+    fun skipFW()
+    {
+        if(mp.isPlaying)
+        {
+            val new_pos : Int = if(mp.currentPosition + 1000 >= mp.duration) mp.duration else mp.currentPosition + 1000
+            seekTo(new_pos)
+        }
+
+    }
+
+    fun skipBW()
+    {
+        if(mp.isPlaying)
+        {
+            val new_pos: Int = if (mp.currentPosition - 1000 <= 0) 0 else mp.currentPosition - 1000
+            seekTo(new_pos)
+        }
+    }
+
+    fun seekTo(pos : Int)
+    {
+        if(isMusicLoaded)
+        {
+            mp.seekTo(pos)
         }
     }
 
