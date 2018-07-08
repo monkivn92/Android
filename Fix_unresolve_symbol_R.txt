@@ -1,0 +1,7 @@
+D:\Android\AmazeFileManager\app\src\main\java\com\amaze\filemanager\ui\views\drawer\Drawer.java
+Line220
+
+D:\Android\AmazeFileManager\app\src\main\java\com\amaze\filemanager\activities\MainActivity.java
+Line565
+
+Run : gradlew clean build

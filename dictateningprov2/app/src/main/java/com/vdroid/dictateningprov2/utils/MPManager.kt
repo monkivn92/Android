@@ -1,6 +1,7 @@
 package com.vdroid.dictateningprov2.utils
 
 import android.media.MediaPlayer
+import android.util.Log
 import android.widget.Toast
 import com.vdroid.dictateningprov2.MainActivity
 import com.vdroid.dictateningprov2.R
@@ -41,9 +42,13 @@ class MPManager(private val mainActivity: MainActivity)
             {
                 loadFile()
             }
-            mainActivity.mPlayBtn.setImageResource(R.drawable.pause)
-            mp.start()
-            updateUI()
+
+            if(isMusicLoaded)
+            {
+                mainActivity.mPlayBtn.setImageResource(R.drawable.pause)
+                mp.start()
+                updateUI()
+            }
         }
         else
         {
@@ -100,7 +105,9 @@ class MPManager(private val mainActivity: MainActivity)
     {
         if(mp.isPlaying)
         {
-            val new_pos: Int = if (mp.currentPosition - 1000 <= 0) 0 else mp.currentPosition - 1000
+            val cur_pos : Int = mp.currentPosition
+            val new_pos: Int = if (cur_pos - 2000 <= 0) 0 else cur_pos - 2000
+            Log.e("BWWWW", new_pos.toString())
             seekTo(new_pos)
         }
     }
@@ -132,5 +139,15 @@ class MPManager(private val mainActivity: MainActivity)
             }
         }
 
+    }
+
+    fun getCurrentPlayingTime() : Int
+    {
+        return if(isMusicLoaded) mp.currentPosition else 0
+    }
+
+    fun getCurrentPlayingFile() : String
+    {
+        return if(isMusicLoaded) mainActivity.filePath else ""
     }
 }

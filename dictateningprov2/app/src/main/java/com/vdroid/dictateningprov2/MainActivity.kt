@@ -22,6 +22,7 @@ import android.support.v4.content.ContextCompat
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.IntentFilter
+import android.os.Environment
 import android.support.v4.content.LocalBroadcastManager
 import android.view.KeyEvent
 import android.view.View
@@ -91,22 +92,6 @@ class MainActivity : AppCompatActivity()
         }
         LocalBroadcastManager.getInstance(this).registerReceiver(mLBReceiver, filter)
 
-        //Publish and register broadcast receiver for saving a file
-        val filter_save = IntentFilter()
-        filter_save.addAction("Save Path Broadcast")
-        mLBReceiverSave = object : BroadcastReceiver()
-        {
-            override fun onReceive(context: Context, intent: Intent)
-            {
-                if (intent.action == "Save Path Broadcast")
-                {
-                    filePathSave = intent.getStringExtra("result_path")
-                    writeFileToDisk()
-                    Log.e("LBPathSave", filePathSave)
-                }
-            }
-        }
-        LocalBroadcastManager.getInstance(this).registerReceiver(mLBReceiverSave, filter_save)
 
         //Listen key event when typing input
         input_txt.setOnKeyListener { _, keyCode, event ->
@@ -129,6 +114,7 @@ class MainActivity : AppCompatActivity()
 
         play_btn.setOnClickListener{v ->
             mpm.play()
+
         }
 
         skip_fw_btn.setOnClickListener{v ->
@@ -138,13 +124,12 @@ class MainActivity : AppCompatActivity()
         skip_bw_btn.setOnClickListener{v ->
             mpm.skipBW()
         }
-
     }
 
     override fun onResume()
     {
         super.onResume()
-        hideNavigationBar()
+        //hideNavigationBar()
     }
 
     override fun onStop()
@@ -157,7 +142,7 @@ class MainActivity : AppCompatActivity()
     {
         super.onDestroy()
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mLBReceiver)
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mLBReceiverSave)
+
     }
 
     fun isPermissionIsGranted(permission: String, activity : Activity): Int
@@ -281,6 +266,10 @@ class MainActivity : AppCompatActivity()
             }
             R.id.save_text -> {
                 val intent = Intent(this@MainActivity, SaveFileActivity::class.java)
+
+                intent.putExtra("editor_content", text_editor.text.toString())
+                intent.putExtra("current_playing_time", mpm.getCurrentPlayingTime())
+                intent.putExtra("current_playing_file", mpm.getCurrentPlayingFile())
                 startActivity(intent)
                 return true
             }
@@ -298,41 +287,5 @@ class MainActivity : AppCompatActivity()
         }
     }
 
-    fun hideNavigationBar() : Unit
-    {
-        val decorView : View = window.decorView
-        decorView.setOnSystemUiVisibilityChangeListener {visibility ->
-            Log.i("LOG visibility","Menu Shown is this $visibility")
-            decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-        }
-    }
-
-    override fun onWindowFocusChanged(hasFocus: Boolean)
-    {
-        super.onWindowFocusChanged(hasFocus)
-        if (hasFocus)
-        {
-            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-        }
-    }
-
-    fun writeFileToDisk()
-    {
-        try
-        {
-            val datfile : File = File(filePathSave)
-            val fOut : FileOutputStream  = FileOutputStream(datfile)
-            val myOutWriter : OutputStreamWriter  = OutputStreamWriter(fOut)
-
-            myOutWriter.write(text_editor.text.toString())
-            myOutWriter.close()
-            fOut.close()
-            Toast.makeText(applicationContext, "Finished writing file to storage", Toast.LENGTH_SHORT).show()
-        }
-        catch (e : Exception )
-        {
-           Toast.makeText(applicationContext, "Write failure", Toast.LENGTH_SHORT).show()
-        }
-    }
 
 }

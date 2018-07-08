@@ -207,15 +207,12 @@ class FileFolderUtils
         fun isExternalStorage(path : String) : Boolean
         {
 
-            if ("/storage/emulated/legacy" == path || "/storage/emulated/0" == path || "/mnt/sdcard" == path)
+            if ("/storage/emulated/legacy" == path || "/storage/emulated/0" == path || "/mnt/sdcard" == path || "/sdcard" == path)
             {
                 return false
             }
-            else if ("/storage/sdcard1" == path)
-            {
-                return true
-            }
-            return false
+
+            return true
         }
 
         //For USB OTG

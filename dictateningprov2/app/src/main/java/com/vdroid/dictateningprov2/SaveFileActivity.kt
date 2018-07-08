@@ -1,7 +1,9 @@
 package com.vdroid.dictateningprov2
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Build
@@ -24,15 +26,34 @@ import kotlinx.android.synthetic.main.ff_item.view.*
 import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
+import android.support.v4.provider.DocumentFile
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.nio.file.Files.createFile
+import java.nio.file.Files.createFile
+
+
+
+
+
+
 
 class SaveFileActivity : AppCompatActivity()
 {
     lateinit var mRVadapter : FFAdapter
 
+    private var editor_content : String? = ""
+    private var current_playing_time : Int = 0
+    private var current_playing_file : String = ""
+
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_save_file)
+
+        editor_content = intent.getStringExtra("editor_content")
+        current_playing_time = intent.getIntExtra("current_playing_time", 0)
+        current_playing_file = intent.getStringExtra("current_playing_file")
 
         val list_storages : ArrayList<JFileSystem> = FileFolderUtils.getAllStorages(this)
 
@@ -71,6 +92,13 @@ class SaveFileActivity : AppCompatActivity()
         return when (item.itemId)
         {
             R.id.select_this -> {
+
+                if(file_name.text.isNullOrEmpty())
+                {
+                    Toast.makeText(this, "Please enter a valid file name", Toast.LENGTH_SHORT).show()
+                    return true
+                }
+
                 if(File(this.mRVadapter.cur_path).canWrite())
                 {
                     val intent = Intent()
@@ -82,11 +110,54 @@ class SaveFileActivity : AppCompatActivity()
                 }
                 else
                 {
-                    Toast.makeText(this, "This directory is not writable", Toast.LENGTH_SHORT).show()
+                    if(!this.mRVadapter.isAccessingSDCard)
+                    {
+                        Toast.makeText(this, "This directory is not writable, need grant permission to write SD card", Toast.LENGTH_LONG).show()
+                    }
+                    else
+                    {
+                        Toast.makeText(this, "Need to perform some special actions to write a file to SD card", Toast.LENGTH_LONG).show()
+                        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), 5656)
+                    }
+
                     super.onOptionsItemSelected(item)
                 }
             }
             else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?)
+    {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if(requestCode == 5656 && resultCode == Activity.RESULT_OK)
+        {
+            val treeUri = data?.getData()
+            val pickedDir = DocumentFile.fromTreeUri(this, treeUri)
+            val file = pickedDir.createFile("//MIME type", file_name.text.toString())
+            val outttt = contentResolver.openOutputStream(file.uri)
+
+            if(!editor_content.isNullOrEmpty())
+            {
+                outttt.write(editor_content?.toByteArray())
+            }
+            else
+            {
+                Toast.makeText(this, "Saving content is empty", Toast.LENGTH_LONG).show()
+            }
+
+            if(current_playing_file.isNotBlank())
+            {
+                val editor : SharedPreferences.Editor  = getSharedPreferences("dict_store", MODE_PRIVATE).edit()
+                editor.putString("${file_name.text}.current_playing_file", current_playing_file)
+                editor.putInt("${file_name.text}.current_playing_time", current_playing_time)
+                editor.apply()
+                Toast.makeText(this, "Progress saved", Toast.LENGTH_LONG).show()
+            }
+
+
+
         }
     }
 
@@ -97,6 +168,8 @@ class SaveFileActivity : AppCompatActivity()
         var aPathStack = ArrayDeque<String>()
 
         var cur_path : String = ""
+
+        var isAccessingSDCard : Boolean = false
 
         private var selectedPos = RecyclerView.NO_POSITION
 
@@ -134,6 +207,12 @@ class SaveFileActivity : AppCompatActivity()
             holder.ff_name.setOnClickListener{ view ->
 
                 cur_path = ff.path
+
+                when(ff.type)
+                {
+                    3 -> isAccessingSDCard = false
+                    4 -> isAccessingSDCard = true
+                }
 
                 if(ff.type != 1)
                 {

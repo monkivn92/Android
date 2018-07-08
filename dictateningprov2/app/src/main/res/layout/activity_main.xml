@@ -36,6 +36,7 @@
             android:layout_marginTop="70dp"
             android:background="@drawable/roundedbutton"
             android:src="@drawable/play"
+            android:focusable="false"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
