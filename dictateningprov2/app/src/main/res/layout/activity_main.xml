@@ -70,27 +70,28 @@
             android:layout_marginEnd="24dp"
             android:layout_marginStart="24dp"
             android:layout_marginTop="24dp"
-            android:background="#e0f2f1"
+            android:padding="4dp"
+            android:background="@drawable/seekbar_border"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/play_btn" />
 
         <TextView
             android:id="@+id/playing_time_txt"
-            android:layout_width="60dp"
+            android:layout_width="80dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="00:00"
+            android:text="00:00:00"
             app:layout_constraintStart_toStartOf="@+id/seekbar"
             app:layout_constraintTop_toBottomOf="@+id/seekbar" />
 
         <TextView
             android:id="@+id/duration_txt"
-            android:layout_width="60dp"
+            android:layout_width="80dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="right"
-            android:text="--:--"
+            android:text="--:--:--"
             app:layout_constraintEnd_toEndOf="@+id/seekbar"
             app:layout_constraintTop_toBottomOf="@+id/seekbar" />
 
@@ -122,8 +123,13 @@
             android:id="@+id/input_txt"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:background="@drawable/edittext_border"
             android:layout_marginTop="32dp"
             android:ems="10"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
             android:textSize="18sp"
             android:focusable="true"
             android:inputType="textPersonName"

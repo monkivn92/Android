@@ -113,8 +113,8 @@ class StorageActivity : AppCompatActivity()
 
             if(ff.isSelected)
             {
-                holder.itemView.ff_name.setTypeface(null, Typeface.BOLD_ITALIC)
-                holder.itemView.setBackgroundColor(Color.parseColor("#c0c0c0"))
+                //holder.itemView.ff_name.setTypeface(null, Typeface.BOLD_ITALIC)
+                holder.itemView.setBackgroundColor(Color.parseColor("#174E8580"))
             }
             else
             {
