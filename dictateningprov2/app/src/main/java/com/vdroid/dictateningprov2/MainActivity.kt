@@ -128,7 +128,7 @@ class MainActivity : AppCompatActivity()
         mSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean)
             {
-                if(fromUser)
+                if(fromUser && mpm.getDuration() != 0)
                 {
                     mpm.seekTo(progress)
                 }

@@ -29,6 +29,7 @@ import kotlin.collections.ArrayList
 import android.support.v4.provider.DocumentFile
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.FileWriter
 import java.nio.file.Files.createFile
 import java.nio.file.Files.createFile
 
@@ -101,12 +102,32 @@ class SaveFileActivity : AppCompatActivity()
 
                 if(File(this.mRVadapter.cur_path).canWrite())
                 {
-                    val intent = Intent()
-                    intent.action = "Save Path Broadcast"
-                    intent.putExtra("result_path", "${this.mRVadapter.cur_path}${File.separator}${file_name.text}")
-                    LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
-                    finish()
-                    return true
+                    if(!editor_content.isNullOrEmpty())
+                    {
+
+                        val gpxfile : File  = File("${this.mRVadapter.cur_path}${File.separator}${file_name.text}")
+                        val writer : FileWriter = FileWriter(gpxfile)
+                        writer.write(editor_content)
+                        writer.flush()
+                        writer.close()
+                        Toast.makeText(this, "File Saved!", Toast.LENGTH_LONG).show()
+                    }
+                    else
+                    {
+                        Toast.makeText(this, "Saving content is empty", Toast.LENGTH_LONG).show()
+                    }
+
+                    if(current_playing_file.isNotBlank())
+                    {
+                        val editor : SharedPreferences.Editor  = getSharedPreferences("dict_store", MODE_PRIVATE).edit()
+                        editor.putString("${file_name.text}.current_playing_file", current_playing_file)
+                        editor.putInt("${file_name.text}.current_playing_time", current_playing_time)
+                        editor.apply()
+                        Toast.makeText(this, "Progress saved", Toast.LENGTH_LONG).show()
+                    }
+
+                   return true
+
                 }
                 else
                 {
