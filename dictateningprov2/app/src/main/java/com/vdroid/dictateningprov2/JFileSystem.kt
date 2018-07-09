@@ -9,6 +9,8 @@ class JFileSystem(val fpath : String)
     var label : String
     var this_item : File
     val STRING_LIMIT : Int = 40
+    var isSelected : Boolean = false
+
     init
     {
         this.path = fpath
@@ -34,6 +36,7 @@ class JFileSystem(val fpath : String)
         }
 
     }
+
 
     fun isMountedDevice(isExtStorage : Boolean) : Unit
     {

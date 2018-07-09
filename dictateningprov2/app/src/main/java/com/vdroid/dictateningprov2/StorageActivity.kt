@@ -23,6 +23,9 @@ import kotlinx.android.synthetic.main.ff_item.view.*
 import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
+import android.widget.CheckBox
+
+
 
 class StorageActivity : AppCompatActivity()
 {
@@ -89,7 +92,8 @@ class StorageActivity : AppCompatActivity()
 
         var cur_path : String = ""
 
-        private var selectedPos = RecyclerView.NO_POSITION
+        private var lastChecked: JFileSystem? = null
+        private var lastCheckedPos = 0
 
         init {
             this.aPathList = paths
@@ -105,13 +109,17 @@ class StorageActivity : AppCompatActivity()
         {
             val ff : JFileSystem = this.aPathList[position]
 
-            holder.itemView.isSelected = this.selectedPos == position
             holder.ff_name.text = ff.label
 
-            if(holder.itemView.isSelected)
+            if(ff.isSelected)
             {
                 holder.itemView.ff_name.setTypeface(null, Typeface.BOLD_ITALIC)
                 holder.itemView.setBackgroundColor(Color.parseColor("#c0c0c0"))
+            }
+            else
+            {
+                holder.itemView.ff_name.setTypeface(null, Typeface.NORMAL)
+                holder.itemView.setBackgroundColor(Color.parseColor("#FFFFFF"))
             }
 
             when(ff.type)
@@ -148,10 +156,6 @@ class StorageActivity : AppCompatActivity()
 
                     if(newPathList.size > 0)
                     {
-                        for (p in this.aPathStack)
-                        {
-                            Log.e("PathStack", p)
-                        }
 
                         this.aPathList.clear()
                         this.aPathList.addAll(newPathList)
@@ -166,9 +170,18 @@ class StorageActivity : AppCompatActivity()
                 }
                 else
                 {
-                    notifyItemChanged(selectedPos)
-                    selectedPos = holder.adapterPosition
-                    notifyItemChanged(selectedPos)
+
+                    lastChecked?.let {
+                        it.isSelected = false
+                    }
+
+                    notifyItemChanged(lastCheckedPos)
+
+                    ff.isSelected = true
+                    lastChecked = ff
+                    lastCheckedPos = holder.adapterPosition
+
+                    notifyItemChanged(lastCheckedPos)
                 }
             }
 
@@ -187,8 +200,6 @@ class StorageActivity : AppCompatActivity()
                 var newPathList : ArrayList<JFileSystem> = ArrayList<JFileSystem>()
 
                 val path = this.aPathStack.pop()
-
-                Log.e("path", path)
 
                 if(path == "end")
                 {

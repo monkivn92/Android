@@ -31,6 +31,7 @@ class MPManager(private val mainActivity: MainActivity)
     {
         playgingTime = ""
         duration = ""
+        mainActivity.mSeekBar.progress = 0
         isMusicLoaded = false
     }
 
@@ -76,6 +77,7 @@ class MPManager(private val mainActivity: MainActivity)
             isMusicLoaded = true
             mainActivity.mDuration.text = mp.duration.toString()
             mainActivity.mPlayingTime.text = mp.currentPosition.toString()
+            mainActivity.mSeekBar.max =  mp.duration
         }
         catch (ex : Exception)
         {
@@ -107,7 +109,6 @@ class MPManager(private val mainActivity: MainActivity)
         {
             val cur_pos : Int = mp.currentPosition
             val new_pos: Int = if (cur_pos - 2000 <= 0) 0 else cur_pos - 2000
-            Log.e("BWWWW", new_pos.toString())
             seekTo(new_pos)
         }
     }
@@ -116,7 +117,10 @@ class MPManager(private val mainActivity: MainActivity)
     {
         if(isMusicLoaded)
         {
+            stopUpdateUI()
             mp.seekTo(pos)
+            mainActivity.mSeekBar.progress = mp.currentPosition
+            updateUI()
         }
     }
 
@@ -132,6 +136,8 @@ class MPManager(private val mainActivity: MainActivity)
             repeat(mp.duration){
 
                 withContext(UI){
+
+                    mainActivity.mSeekBar.progress = mp.currentPosition
                     mainActivity.mDuration.text = mp.duration.toString()
                     mainActivity.mPlayingTime.text = mp.currentPosition.toString()
                 }
@@ -149,5 +155,10 @@ class MPManager(private val mainActivity: MainActivity)
     fun getCurrentPlayingFile() : String
     {
         return if(isMusicLoaded) mainActivity.filePath else ""
+    }
+
+    fun getDuration() : Int
+    {
+        return if(isMusicLoaded) mp.duration else 0
     }
 }
