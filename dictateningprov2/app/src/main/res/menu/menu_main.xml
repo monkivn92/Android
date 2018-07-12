@@ -4,13 +4,18 @@
     tools:context="com.vdroid.dictateningprov2.MainActivity">
     <item
         android:id="@+id/select_file"
-        android:orderInCategory="100"
+        android:orderInCategory="101"
         android:title="@string/select_file"
         app:showAsAction="never" />
     <item
         android:id="@+id/save_text"
-        android:orderInCategory="100"
+        android:orderInCategory="102"
         android:title="@string/save_text_only"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/clear_text"
+        android:orderInCategory="103"
+        android:title="@string/clear_text"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_exit"

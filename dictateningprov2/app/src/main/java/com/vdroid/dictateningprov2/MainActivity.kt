@@ -1,7 +1,6 @@
 package com.vdroid.dictateningprov2
 
 import android.Manifest
-import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
@@ -15,15 +14,17 @@ import android.os.Build
 import java.util.*
 
 import android.app.Activity
+import android.content.*
 import android.content.pm.PackageManager
 
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.IntentFilter
 import android.os.Environment
+import android.preference.PreferenceManager
 import android.support.v4.content.LocalBroadcastManager
+import android.text.Editable
+import android.text.SpannableStringBuilder
+import android.text.TextWatcher
 import android.view.KeyEvent
 import android.view.View
 import android.widget.*
@@ -56,11 +57,17 @@ class MainActivity : AppCompatActivity()
 
     lateinit var mpm : MPManager
 
+    lateinit var prefs : SharedPreferences
+
+    lateinit var prefsEditor : SharedPreferences.Editor
+
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
+        prefs = getSharedPreferences("dict_store", Context.MODE_PRIVATE)
+        prefsEditor = prefs.edit()
 
         mSeekBar= seekbar
         mPlayingTime = playing_time_txt
@@ -144,6 +151,31 @@ class MainActivity : AppCompatActivity()
             }
 
         })
+
+        val val_from_last_session : String = prefs.getString("editor_text_last_session", "")
+
+        if(val_from_last_session.isNotBlank())
+        {
+            text_editor.setText(val_from_last_session)
+        }
+
+        text_editor.addTextChangedListener(object : TextWatcher{
+            override fun afterTextChanged(s: Editable?)
+            {
+                prefsEditor.putString("editor_text_last_session", text_editor.text.toString())
+                prefsEditor.apply()
+
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            }
+
+        })
+
+
 
     }
 
@@ -285,6 +317,14 @@ class MainActivity : AppCompatActivity()
                 finish()
                 return true
             }
+
+            R.id.clear_text -> {
+                text_editor.setText("")
+                prefsEditor.putString("editor_text_last_session", text_editor.text.toString())
+                prefsEditor.apply()
+                return true
+            }
+
             R.id.save_text -> {
                 val intent = Intent(this@MainActivity, SaveFileActivity::class.java)
 

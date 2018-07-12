@@ -94,6 +94,7 @@ class StorageActivity : AppCompatActivity()
 
         private var lastChecked: JFileSystem? = null
         private var lastCheckedPos = 0
+        private var lastHolder : FFViewHolder? = null
 
         init {
             this.aPathList = paths
@@ -159,6 +160,7 @@ class StorageActivity : AppCompatActivity()
 
                         this.aPathList.clear()
                         this.aPathList.addAll(newPathList)
+                        this.aPathList.sortWith(compareBy( { it.type}, {it.label }))
                         notifyDataSetChanged()
                     }
                     else
@@ -175,14 +177,29 @@ class StorageActivity : AppCompatActivity()
                         it.isSelected = false
                     }
 
+                    //for textView marquee
+                    //lastHolder?.let { it.ff_name.isSelected = false }
+
+                    ///good for performance, but marquee can not run, use notifyDataSetChanged()
                     notifyItemChanged(lastCheckedPos)
 
                     ff.isSelected = true
                     lastChecked = ff
+
+                    //for textView marquee
+                    //holder.ff_name.isSelected = true
+                    //lastHolder = holder
+
                     lastCheckedPos = holder.adapterPosition
 
                     notifyItemChanged(lastCheckedPos)
+
                 }
+            }
+
+            holder.ff_name.setOnLongClickListener { v ->
+                Toast.makeText(aContext, "${holder.ff_name.text}", Toast.LENGTH_SHORT).show()
+                true
             }
 
         }
