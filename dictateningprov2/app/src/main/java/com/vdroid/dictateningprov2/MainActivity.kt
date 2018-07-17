@@ -4,8 +4,6 @@ import android.Manifest
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
 
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -25,8 +23,7 @@ import android.support.v4.content.LocalBroadcastManager
 import android.text.Editable
 import android.text.SpannableStringBuilder
 import android.text.TextWatcher
-import android.view.KeyEvent
-import android.view.View
+import android.view.*
 import android.widget.*
 
 import com.vdroid.dictateningprov2.utils.MPManager
@@ -174,6 +171,16 @@ class MainActivity : AppCompatActivity()
             }
 
         })
+
+        text_editor.setOnClickListener { v ->
+            input_txt.requestFocus()
+            text_editor.clearFocus()
+            val intent = Intent(this@MainActivity, EditActivity::class.java)
+            intent.putExtra("content", text_editor.text.toString())
+            intent.putExtra("pos", text_editor.selectionStart)
+            startActivity(intent)
+
+        }
 
 
 

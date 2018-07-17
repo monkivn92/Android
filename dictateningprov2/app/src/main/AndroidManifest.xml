@@ -14,33 +14,33 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".MainActivity"
-            android:label="Dictatenting Pro"
             android:configChanges="orientation"
-            android:windowSoftInputMode="adjustPan"
+            android:label="Dictatenting Pro"
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".StorageActivity"
-                android:label="Choose a storage"
-                android:configChanges="orientation"
-                android:parentActivityName=".MainActivity"
-                android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".SaveFileActivity"
-            android:label="Save File"
+        <activity
+            android:name=".StorageActivity"
             android:configChanges="orientation"
+            android:label="Choose a storage"
             android:parentActivityName=".MainActivity"
-            android:screenOrientation="portrait">
-        </activity>
-
+            android:screenOrientation="portrait"></activity>
+        <activity
+            android:name=".SaveFileActivity"
+            android:configChanges="orientation"
+            android:label="Save File"
+            android:parentActivityName=".MainActivity"
+            android:screenOrientation="portrait"></activity>
+        <activity android:name=".EditActivity"
+            android:parentActivityName=".MainActivity"
+            ></activity>
     </application>
 
 </manifest>
