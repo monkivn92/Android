@@ -3,67 +3,40 @@ package com.vdroid.dictateningprov2
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.graphics.Color
 import android.graphics.Typeface
-import android.net.Uri
-import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Environment
 import android.support.v4.content.LocalBroadcastManager
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import com.vdroid.dictateningprov2.utils.FileFolderUtils
+import kotlinx.android.synthetic.main.activity_edit.*
 import kotlinx.android.synthetic.main.activity_files.*
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.activity_save_file.*
 import kotlinx.android.synthetic.main.ff_item.view.*
 import java.io.File
 import java.util.*
-import kotlin.collections.ArrayList
-import android.support.v4.provider.DocumentFile
-import kotlinx.android.synthetic.main.activity_edit.*
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.FileWriter
-import java.nio.file.Files.createFile
-import java.nio.file.Files.createFile
 
-
-
-
-
-
-
-class SaveFileActivity : AppCompatActivity()
+class LoadProgressActivity : AppCompatActivity()
 {
-    lateinit var mRVadapter : FFAdapter
 
-    private var editor_content : String? = ""
-    private var current_playing_time : Int = 0
-    private var current_playing_file : String = ""
+    lateinit var mRVadapter : FFAdapter
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_save_file)
-
-        editor_content = intent.getStringExtra("editor_content")
-        current_playing_time = intent.getIntExtra("current_playing_time", 0)
-        current_playing_file = intent.getStringExtra("current_playing_file")
+        setContentView(R.layout.activity_files)
 
         val list_storages : ArrayList<JFileSystem> = FileFolderUtils.getAllStorages(this)
 
         mRVadapter = FFAdapter(list_storages, this)
         this.mRVadapter.aPathStack.add("end")
-        file_list_save.layoutManager = LinearLayoutManager(this)
-        file_list_save.adapter = mRVadapter
+        file_list.layoutManager = LinearLayoutManager(this)
+        file_list.adapter = mRVadapter
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean
@@ -95,72 +68,13 @@ class SaveFileActivity : AppCompatActivity()
         return when (item.itemId)
         {
             R.id.select_this -> {
-
-                if(file_name.text.isNullOrEmpty())
-                {
-                    Toast.makeText(this, "Please enter a valid file name", Toast.LENGTH_SHORT).show()
-                    return true
-                }
-
-                if(File(this.mRVadapter.cur_path).canWrite())
-                {
-                    if(!editor_content.isNullOrEmpty())
-                    {
-
-                        val gpxfile : File  = File("${this.mRVadapter.cur_path}${File.separator}${file_name.text}")
-                        val writer : FileWriter = FileWriter(gpxfile)
-                        writer.write(editor_content)
-                        writer.flush()
-                        writer.close()
-                        Toast.makeText(this, "File Saved!", Toast.LENGTH_LONG).show()
-                    }
-                    else
-                    {
-                        Toast.makeText(this, "Saving content is empty", Toast.LENGTH_LONG).show()
-                    }
-
-                   return true
-
-                }
-                else
-                {
-                    if(!this.mRVadapter.isAccessingSDCard)
-                    {
-                        Toast.makeText(this, "This directory is not writable, need grant permission to write SD card", Toast.LENGTH_LONG).show()
-                    }
-                    else
-                    {
-                        Toast.makeText(this, "Need to perform some special actions to write a file to SD card", Toast.LENGTH_LONG).show()
-                        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), 5656)
-                    }
-
-                    super.onOptionsItemSelected(item)
-                }
+                val intent = Intent()
+                intent.putExtra("progress_path", this.mRVadapter.cur_path)
+                setResult(Activity.RESULT_OK, intent)
+                finish()
+                return true
             }
             else -> super.onOptionsItemSelected(item)
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?)
-    {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if(requestCode == 5656 && resultCode == Activity.RESULT_OK)
-        {
-            val treeUri = data?.getData()
-            val pickedDir = DocumentFile.fromTreeUri(this, treeUri)
-            val file = pickedDir.createFile("//MIME type", file_name.text.toString())
-            val outttt = contentResolver.openOutputStream(file.uri)
-
-            if(!editor_content.isNullOrEmpty())
-            {
-                outttt.write(editor_content?.toByteArray())
-            }
-            else
-            {
-                Toast.makeText(this, "Saving content is empty", Toast.LENGTH_LONG).show()
-            }
-
         }
     }
 
@@ -172,9 +86,9 @@ class SaveFileActivity : AppCompatActivity()
 
         var cur_path : String = ""
 
-        var isAccessingSDCard : Boolean = false
-
-        private var selectedPos = RecyclerView.NO_POSITION
+        private var lastChecked: JFileSystem? = null
+        private var lastCheckedPos = 0
+        private var lastHolder : FFViewHolder? = null
 
         init {
             this.aPathList = paths
@@ -190,13 +104,17 @@ class SaveFileActivity : AppCompatActivity()
         {
             val ff : JFileSystem = this.aPathList[position]
 
-            holder.itemView.isSelected = this.selectedPos == position
             holder.ff_name.text = ff.label
 
-            if(holder.itemView.isSelected)
+            if(ff.isSelected)
             {
-                holder.itemView.ff_name.setTypeface(null, Typeface.BOLD_ITALIC)
-                holder.itemView.setBackgroundColor(Color.parseColor("#c0c0c0"))
+                //holder.itemView.ff_name.setTypeface(null, Typeface.BOLD_ITALIC)
+                holder.itemView.setBackgroundColor(Color.parseColor("#174E8580"))
+            }
+            else
+            {
+                holder.itemView.ff_name.setTypeface(null, Typeface.NORMAL)
+                holder.itemView.setBackgroundColor(Color.parseColor("#FFFFFF"))
             }
 
             when(ff.type)
@@ -210,12 +128,6 @@ class SaveFileActivity : AppCompatActivity()
             holder.ff_name.setOnClickListener{ view ->
 
                 cur_path = ff.path
-
-                when(ff.type)
-                {
-                    3 -> isAccessingSDCard = false
-                    4 -> isAccessingSDCard = true
-                }
 
                 if(ff.type != 1)
                 {
@@ -239,13 +151,10 @@ class SaveFileActivity : AppCompatActivity()
 
                     if(newPathList.size > 0)
                     {
-                        for (p in this.aPathStack)
-                        {
-                            Log.e("PathStack", p)
-                        }
 
                         this.aPathList.clear()
                         this.aPathList.addAll(newPathList)
+                        this.aPathList.sortWith(compareBy( { it.type}, {it.label }))
                         notifyDataSetChanged()
                     }
                     else
@@ -257,10 +166,34 @@ class SaveFileActivity : AppCompatActivity()
                 }
                 else
                 {
-                    notifyItemChanged(selectedPos)
-                    selectedPos = holder.adapterPosition
-                    notifyItemChanged(selectedPos)
+
+                    lastChecked?.let {
+                        it.isSelected = false
+                    }
+
+                    //for textView marquee
+                    //lastHolder?.let { it.ff_name.isSelected = false }
+
+                    ///good for performance, but marquee can not run, use notifyDataSetChanged()
+                    notifyItemChanged(lastCheckedPos)
+
+                    ff.isSelected = true
+                    lastChecked = ff
+
+                    //for textView marquee
+                    //holder.ff_name.isSelected = true
+                    //lastHolder = holder
+
+                    lastCheckedPos = holder.adapterPosition
+
+                    notifyItemChanged(lastCheckedPos)
+
                 }
+            }
+
+            holder.ff_name.setOnLongClickListener { v ->
+                Toast.makeText(aContext, "${holder.ff_name.text}", Toast.LENGTH_SHORT).show()
+                true
             }
 
         }
@@ -278,8 +211,6 @@ class SaveFileActivity : AppCompatActivity()
                 var newPathList : ArrayList<JFileSystem> = ArrayList<JFileSystem>()
 
                 val path = this.aPathStack.pop()
-
-                Log.e("path", path)
 
                 if(path == "end")
                 {
@@ -323,5 +254,4 @@ class SaveFileActivity : AppCompatActivity()
         }
 
     }
-
 }

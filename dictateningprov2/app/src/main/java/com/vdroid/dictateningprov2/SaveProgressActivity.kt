@@ -6,12 +6,9 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
 import android.graphics.Typeface
-import android.net.Uri
-import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Environment
-import android.support.v4.content.LocalBroadcastManager
+import android.support.v4.provider.DocumentFile
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.util.Log
@@ -20,32 +17,18 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import com.vdroid.dictateningprov2.utils.FileFolderUtils
-import kotlinx.android.synthetic.main.activity_files.*
-import kotlinx.android.synthetic.main.activity_main.*
+import com.vdroid.dictateningprov2.utils.VPayLoad
 import kotlinx.android.synthetic.main.activity_save_file.*
 import kotlinx.android.synthetic.main.ff_item.view.*
-import java.io.File
+import java.io.*
 import java.util.*
-import kotlin.collections.ArrayList
-import android.support.v4.provider.DocumentFile
-import kotlinx.android.synthetic.main.activity_edit.*
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.FileWriter
-import java.nio.file.Files.createFile
-import java.nio.file.Files.createFile
 
-
-
-
-
-
-
-class SaveFileActivity : AppCompatActivity()
+class SaveProgressActivity : AppCompatActivity()
 {
+
     lateinit var mRVadapter : FFAdapter
 
-    private var editor_content : String? = ""
+    private var editor_content : String = ""
     private var current_playing_time : Int = 0
     private var current_playing_file : String = ""
 
@@ -104,22 +87,29 @@ class SaveFileActivity : AppCompatActivity()
 
                 if(File(this.mRVadapter.cur_path).canWrite())
                 {
-                    if(!editor_content.isNullOrEmpty())
+                    if(!current_playing_file.isNullOrBlank() && !editor_content.isNullOrBlank())
                     {
+                        val vpayload : VPayLoad = VPayLoad(current_playing_file, current_playing_time, editor_content)
+                        try
+                        {
+                            val fpath = "${this.mRVadapter.cur_path}${File.separator}${file_name.text}"
+                            val oos = ObjectOutputStream(FileOutputStream(fpath))
+                            oos.writeObject(vpayload)
+                            oos.close()
+                            Toast.makeText(this, "Save File Successfully", Toast.LENGTH_SHORT).show()
+                        }
+                        catch (e: IOException)
+                        {
 
-                        val gpxfile : File  = File("${this.mRVadapter.cur_path}${File.separator}${file_name.text}")
-                        val writer : FileWriter = FileWriter(gpxfile)
-                        writer.write(editor_content)
-                        writer.flush()
-                        writer.close()
-                        Toast.makeText(this, "File Saved!", Toast.LENGTH_LONG).show()
+                           Toast.makeText(this, "Save File Failed", Toast.LENGTH_SHORT).show()
+                        }
                     }
                     else
                     {
-                        Toast.makeText(this, "Saving content is empty", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, "Save content is empty or audio not loaded", Toast.LENGTH_SHORT).show()
                     }
 
-                   return true
+                    return true
 
                 }
                 else
@@ -152,13 +142,27 @@ class SaveFileActivity : AppCompatActivity()
             val file = pickedDir.createFile("//MIME type", file_name.text.toString())
             val outttt = contentResolver.openOutputStream(file.uri)
 
-            if(!editor_content.isNullOrEmpty())
+            if(!current_playing_file.isNullOrBlank() && !editor_content.isNullOrBlank())
             {
-                outttt.write(editor_content?.toByteArray())
+                val vpayload : VPayLoad = VPayLoad(current_playing_file, current_playing_time, editor_content)
+                try
+                {
+                    val bos = ByteArrayOutputStream()
+                    val oos = ObjectOutputStream(bos)
+                    oos.writeObject(vpayload)
+
+                    outttt.write(bos.toByteArray())
+
+                    Toast.makeText(this, "Save File Successfully", Toast.LENGTH_SHORT).show()
+                }
+                catch (e: IOException)
+                {
+                    Toast.makeText(this, "Save File Failed", Toast.LENGTH_SHORT).show()
+                }
             }
             else
             {
-                Toast.makeText(this, "Saving content is empty", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Save content is empty or audio not loaded", Toast.LENGTH_SHORT).show()
             }
 
         }
@@ -323,5 +327,4 @@ class SaveFileActivity : AppCompatActivity()
         }
 
     }
-
 }

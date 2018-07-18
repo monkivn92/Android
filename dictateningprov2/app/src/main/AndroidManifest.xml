@@ -31,16 +31,26 @@
             android:configChanges="orientation"
             android:label="Choose a storage"
             android:parentActivityName=".MainActivity"
-            android:screenOrientation="portrait"></activity>
+            android:screenOrientation="portrait" />
         <activity
             android:name=".SaveFileActivity"
             android:configChanges="orientation"
             android:label="Save File"
             android:parentActivityName=".MainActivity"
-            android:screenOrientation="portrait"></activity>
-        <activity android:name=".EditActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".EditActivity"
+            android:label="Edit"
+            android:parentActivityName=".MainActivity" />
+
+        <activity android:name=".SaveProgressActivity"
+            android:label="Save Progress"
+            android:parentActivityName=".MainActivity"/>
+
+        <activity android:name=".LoadProgressActivity"
+            android:label="Load Progress"
             android:parentActivityName=".MainActivity"
-            ></activity>
+            />
     </application>
 
 </manifest>

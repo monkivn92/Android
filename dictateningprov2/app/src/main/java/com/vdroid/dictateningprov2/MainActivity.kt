@@ -14,6 +14,7 @@ import java.util.*
 import android.app.Activity
 import android.content.*
 import android.content.pm.PackageManager
+import android.net.Uri
 
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
@@ -27,9 +28,8 @@ import android.view.*
 import android.widget.*
 
 import com.vdroid.dictateningprov2.utils.MPManager
-import java.io.File
-import java.io.FileOutputStream
-import java.io.OutputStreamWriter
+import com.vdroid.dictateningprov2.utils.VPayLoad
+import java.io.*
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -149,7 +149,7 @@ class MainActivity : AppCompatActivity()
 
         })
 
-        val val_from_last_session : String = prefs.getString("editor_text_last_session", "")
+        val val_from_last_session : String = prefs.getString("editor_text_autosave", "")
 
         if(val_from_last_session.isNotBlank())
         {
@@ -159,7 +159,7 @@ class MainActivity : AppCompatActivity()
         text_editor.addTextChangedListener(object : TextWatcher{
             override fun afterTextChanged(s: Editable?)
             {
-                prefsEditor.putString("editor_text_last_session", text_editor.text.toString())
+                prefsEditor.putString("editor_text_autosave", text_editor.text.toString())
                 prefsEditor.apply()
 
             }
@@ -178,7 +178,7 @@ class MainActivity : AppCompatActivity()
             val intent = Intent(this@MainActivity, EditActivity::class.java)
             intent.putExtra("content", text_editor.text.toString())
             intent.putExtra("pos", text_editor.selectionStart)
-            startActivity(intent)
+            startActivityForResult(intent, 3333)
 
         }
 
@@ -341,6 +341,21 @@ class MainActivity : AppCompatActivity()
                 startActivity(intent)
                 return true
             }
+
+            R.id.save_progress -> {
+                val intent = Intent(this@MainActivity, SaveProgressActivity::class.java)
+
+                intent.putExtra("editor_content", text_editor.text.toString())
+                intent.putExtra("current_playing_time", mpm.getCurrentPlayingTime())
+                intent.putExtra("current_playing_file", mpm.getCurrentPlayingFile())
+                startActivity(intent)
+                return true
+            }
+            R.id.load_progress -> {
+                val intent = Intent(this@MainActivity, LoadProgressActivity::class.java)
+                startActivityForResult(intent, 6666)
+                return true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -349,9 +364,30 @@ class MainActivity : AppCompatActivity()
     {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if(requestCode == 123)
+        if(requestCode == 3333)
         {
-            Log.e("Log from main activity", "mainnnnn ${data?.getStringExtra("result_path")}")
+            val modified_content = data?.getStringExtra("modified_content")
+            if(modified_content != null && modified_content.isNotBlank())
+            {
+                text_editor.text = SpannableStringBuilder(modified_content)
+            }
+        }
+
+        if(requestCode == 6666)
+        {
+            val progress_path = data?.getStringExtra("progress_path")
+            if(!progress_path.isNullOrBlank())
+            {
+                val fin = FileInputStream(progress_path)
+                val ois = ObjectInputStream(fin)
+                val savedObject : VPayLoad = ois.readObject() as VPayLoad
+                savedObject?.let {
+                    filePath = it.audioFile
+                    text_editor.text = SpannableStringBuilder(it.textContent)
+                    mpm.reset()
+                    mpm.seekTo(it.audioPlayingTime)
+                }
+            }
         }
     }
 
